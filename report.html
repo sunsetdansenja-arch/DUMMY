@@ -43,6 +43,7 @@
         .toast-show { transform: translateY(0) !important; }
         @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
         .animate-fade { animation: fadeInUp 0.4s ease-out forwards; }
+        .hidden-tab { display: none !important; }
     </style>
 </head>
 <body class="flex justify-center antialiased">
@@ -103,7 +104,7 @@
                     <div id="print-analytic" class="a4-paper shadow-2xl">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px;">
                             <h1 style="font-size: 24px; font-weight: 900; margin:0; color:#FF3B30; font-family:Arial;">FAMILY FOOD INDONESIA</h1>
-                            <p style="margin: 5px 0 0 0; color: #6B7280; font-size: 13px; font-weight: bold; uppercase">Executive SC Analytic Report</p>
+                            <p style="margin: 5px 0 0 0; color: #6B7280; font-size: 13px; font-weight: bold; text-transform: uppercase;">Executive SC Analytic Report</p>
                             <p style="margin: 2px 0 0 0; color: #9CA3AF; font-size: 11px; font-style:italic;" id="lbl-analytic-date">-</p>
                         </div>
                         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 25px; font-family: Arial;">
@@ -151,7 +152,7 @@
         let dbLogData = []; let dbForecastData = []; let dbDiagData = [];
         let barChart = null; let pieChart = null;
 
-        window.onload = async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
             
             const currMonth = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
@@ -163,8 +164,8 @@
             DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
             DC_LIST.forEach(dc => sel.innerHTML += `<option value="${dc}">${dc}</option>`);
 
-            await fetchAndRenderReport();
-        };
+            setTimeout(() => { fetchAndRenderReport(); }, 100);
+        });
 
         function showToast(msg) {
             const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg;
@@ -192,14 +193,16 @@
 
         async function fetchAndRenderReport() {
             try {
+                // PERBAIKAN: Menambahkan headers Content-Type application/json agar n8n bisa memparsing body action
                 const [reqLog, reqBuffer, reqDiag] = await Promise.all([
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json()),
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_diagnose" }) }).then(r => r.json())
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json()),
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }).then(r => r.json())
                 ]);
-                dbLogData = reqLog.data || [];
-                dbForecastData = reqBuffer.data || (Array.isArray(reqBuffer)?reqBuffer[0].data:[]);
-                dbDiagData = reqDiag.data || (Array.isArray(reqDiag)?reqDiag[0].data:[]);
+                
+                dbLogData = Array.isArray(reqLog) ? reqLog[0].data || reqLog : reqLog.data || [];
+                dbForecastData = Array.isArray(reqBuffer) ? reqBuffer[0].data || reqBuffer : reqBuffer.data || [];
+                dbDiagData = Array.isArray(reqDiag) ? reqDiag[0].data || reqDiag : reqDiag.data || [];
                 
                 renderAnalyticReport();
                 renderLogReport();
@@ -223,7 +226,7 @@
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
 
             let crit=0, safe=0;
-            dbForecastData.forEach(i => { const row=i.json||i; if(String(row.col_6).includes("CRITICAL")) crit++; else safe++; });
+            dbForecastData.forEach(i => { const row=i.json||i; if(String(row.col_6||"").includes("CRITICAL")) crit++; else safe++; });
             document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
             document.getElementById('rep-inv-health').innerHTML = `<span style="color:#FF3B30; font-weight:bold;">${crit} SKU Kritis</span> | <span style="color:#34C759; font-weight:bold;">${safe} SKU Aman</span>`;
 
