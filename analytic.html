@@ -35,6 +35,7 @@
         </div>
 
         <div class="p-6 md:p-10 space-y-8 animate-fade">
+            <!-- Summary Stats -->
             <div class="flex gap-4">
                 <div class="flex-1 bg-appcard border border-white/7 p-6 rounded-4xl flex flex-col justify-between">
                     <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Total SKU</p>
@@ -46,6 +47,7 @@
                 </div>
             </div>
 
+            <!-- TRACEABILITY & AGE TRACKING -->
             <div class="space-y-4 pt-2">
                 <div class="bg-appappleorange/10 px-4 py-3 rounded-2xl border border-appappleorange/20 mb-4">
                     <h4 class="text-xs font-black text-appappleorange uppercase tracking-widest"><i class="fa-solid fa-radar mr-2"></i> TRACEABILITY (SISA UMUR BATCH)</h4>
@@ -66,6 +68,7 @@
                 <div id="batch-container" class="space-y-3"></div>
             </div>
 
+            <!-- INVENTORY HEALTH -->
             <div class="bg-appcard rounded-4xl border border-appappleblue/25 overflow-hidden mt-8">
                 <div class="bg-appappleblue/10 px-6 py-5 border-b border-appappleblue/15"><h4 class="text-sm font-black text-appappleblue uppercase tracking-widest">📦 INVENTORY HEALTH</h4></div>
                 <div class="p-3 overflow-x-auto"><div class="min-w-[340px]">
@@ -76,6 +79,7 @@
                 </div></div>
             </div>
 
+            <!-- DC DIAGNOSE -->
             <div class="space-y-4 pt-4 border-t border-white/5 mt-8">
                 <h4 class="text-xs font-black text-appappleblue uppercase tracking-[0.2em] px-2">DC Diagnose Results</h4>
                 <div id="diagnosa-container" class="grid grid-cols-1 gap-4"></div>
@@ -105,11 +109,12 @@
             fCont.innerHTML = getSkel(5); dCont.innerHTML = getSkel(3, true); bCont.innerHTML = getSkel(2, true);
             
             try {
+                // PERBAIKAN: API Call dengan Headers yang benar
                 const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_buffer" }) }), 
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_diagnose" }) }),
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "get_db_stock" }) }),
-                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_admin" }) })
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }), 
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }),
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_db_stock" }) }),
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) })
                 ]);
                 
                 // 1. Forecast Buffer
