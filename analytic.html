@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FFI - Analytic & QC</title>
+    
+    <link rel="icon" type="image/png" href="./LOGO FFI.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        appbg: '#000000', appcard: '#1C1C1E',
+                        appapplered: '#FF3B30', appappleblue: '#ADD8E6', appappleorange: '#FF9500', appgreen: '#34C759', appred: '#FF3B30'
+                    },
+                    borderRadius: { '4xl': '2rem' },
+                    fontFamily: { 'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+        .skeleton-box { position: relative; overflow: hidden; background-color: #1C1C1E; }
+        .skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeInUp 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="flex justify-center antialiased">
+
+    <div class="w-full max-w-md md:max-w-3xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5 pb-20">
+        
+        <!-- Header Nav -->
+        <div class="px-6 py-5 sticky top-0 bg-[#000000]/92 backdrop-blur-xl z-20 flex justify-between items-center border-b border-white/5">
+            <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-transform active:scale-95 text-xs flex items-center gap-2 font-extrabold tracking-widest">
+                <i class="fa-solid fa-chevron-left"></i> LOBBY
+            </button>
+            <h2 class="text-sm font-black text-appappleblue tracking-widest uppercase">Analytic & QC</h2>
+            <button onclick="loadAnalytics()" class="text-white hover:text-appappleblue transition-transform active:scale-90 text-lg">
+                <i class="fa-solid fa-rotate-right" id="sync-icon"></i>
+            </button>
+        </div>
+
+        <div class="p-6 md:p-10 space-y-8 animate-fade">
+            <!-- Summary Stats -->
+            <div class="flex gap-4">
+                <div class="flex-1 bg-appcard border border-white/7 p-6 rounded-4xl flex flex-col justify-between shadow-[0_0_15px_rgba(173,216,230,0.15)]">
+                    <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Total SKU</p>
+                    <p id="stat-sku" class="text-4xl font-black text-white mt-2">0</p>
+                </div>
+                <div class="flex-1 bg-appcard border border-white/7 p-6 rounded-4xl flex flex-col justify-between">
+                    <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest text-appappleblue">DC Terpantau</p>
+                    <p id="stat-dc" class="text-4xl font-black text-white mt-2">0</p>
+                </div>
+            </div>
+
+            <!-- INVENTORY HEALTH -->
+            <div class="bg-appcard rounded-4xl border border-appappleblue/25 shadow-[0_0_15px_rgba(173,216,230,0.15)] overflow-hidden">
+                <div class="bg-appappleblue/10 px-6 py-5 border-b border-appappleblue/15">
+                    <h4 class="text-sm font-black text-appappleblue uppercase tracking-widest">📦 INVENTORY HEALTH</h4>
+                </div>
+                <div class="p-3 overflow-x-auto">
+                    <div class="min-w-[340px]">
+                        <div class="grid grid-cols-5 gap-1.5 px-4 py-3 text-[9px] text-gray-500 font-extrabold uppercase tracking-widest border-b border-white/5 text-center">
+                            <div class="text-left">NAMA SKU</div><div>AVG 3 BLN</div><div id="th-forecast" class="text-appappleblue italic">FORECAST</div><div id="th-buffer" class="text-appapplered italic">BUFFER</div><div>STATUS</div>
+                        </div>
+                        <div id="forecast-container" class="px-3 pb-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRACEABILITY & AGE TRACKING -->
+            <div class="space-y-4 pt-4">
+                <h4 class="text-xs font-black text-white uppercase tracking-[0.2em] px-2">🔬 TRACEABILITY & AGE TRACKING</h4>
+                <div class="grid grid-cols-4 gap-2 px-1">
+                    <div class="bg-appcard border border-appgreen/30 p-2.5 rounded-2xl text-center"><p class="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Grade A</p><p id="stat-grade-a" class="text-lg font-black text-appgreen">0</p></div>
+                    <div class="bg-appcard border border-appappleblue/30 p-2.5 rounded-2xl text-center"><p class="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Grade B</p><p id="stat-grade-b" class="text-lg font-black text-appappleblue">0</p></div>
+                    <div class="bg-appcard border border-appappleorange/30 p-2.5 rounded-2xl text-center"><p class="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Grade C</p><p id="stat-grade-c" class="text-lg font-black text-appappleorange">0</p></div>
+                    <div class="bg-appcard border border-appred/30 p-2.5 rounded-2xl text-center"><p class="text-[7px] text-gray-500 font-bold uppercase tracking-widest mb-1">Expired</p><p id="stat-grade-exp" class="text-lg font-black text-appred">0</p></div>
+                </div>
+                <div id="batch-container" class="space-y-3 mt-4"></div>
+            </div>
+
+            <!-- DC DIAGNOSE -->
+            <div class="space-y-4 pt-4 border-t border-white/5">
+                <h4 class="text-xs font-black text-appappleblue uppercase tracking-[0.2em] px-2">DC Diagnose Results</h4>
+                <div id="diagnosa-container" class="grid grid-cols-1 gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+
+        window.onload = () => {
+            if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+            updateMonthHeaders();
+            loadAnalytics();
+        };
+
+        function updateMonthHeaders() {
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]; const d = new Date();
+            document.getElementById('th-buffer').innerHTML = `BUFFER<br>(${months[d.getMonth()]})`; 
+            document.getElementById('th-forecast').innerHTML = `FORECAST<br>(${months[(d.getMonth() + 1) % 12]})`;
+        }
+
+        function getSkel(count, isList=false) {
+            return Array(count).fill(isList ? `<div class="skeleton-box rounded-3xl h-24 w-full mb-3"></div>` : `<div class="skeleton-box rounded-xl h-10 w-full mb-1.5"></div>`).join('');
+        }
+
+        async function loadAnalytics() {
+            const icn = document.getElementById('sync-icon'); icn.classList.add('fa-spin');
+            const fCont = document.getElementById('forecast-container'); const dCont = document.getElementById('diagnosa-container'); const bCont = document.getElementById('batch-container');
+            fCont.innerHTML = getSkel(5); dCont.innerHTML = getSkel(3, true); bCont.innerHTML = getSkel(3, true);
+            
+            try {
+                const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
+                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_buffer" }) }), 
+                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_diagnose" }) }),
+                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "get_db_stock" }) }),
+                    fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ action: "load_admin" }) })
+                ]);
+                
+                // 1. Forecast Buffer
+                fCont.innerHTML = ''; let skuCount = 0;
+                if(reqBuffer.status === 'fulfilled') {
+                    let r = await reqBuffer.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
+                    (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
+                        const row = item.json || item; const vals = Object.values(row); let sku = row.col_2 || vals[1];
+                        if(!sku || String(sku).includes("NAMA SKU") || String(sku).includes("col_")) return;
+                        const st = String(row.col_6 || vals[5] || ""); skuCount++;
+                        const dot = st.includes("CRITICAL") ? '<span class="h-2.5 w-2.5 rounded-full bg-appred animate-pulse"></span>' : '<span class="h-2.5 w-2.5 rounded-full bg-appgreen"></span>';
+                        fCont.innerHTML += `<div class="grid grid-cols-5 gap-1.5 items-center py-3 border-b border-white/5 text-[10px] text-center animate-fade" style="animation-delay:${idx*30}ms;opacity:0"><div class="font-extrabold text-left truncate">${sku}</div><div class="text-gray-400 font-bold">${Math.round(Number(row.col_3||vals[2]||0))}</div><div class="font-black">${Math.round(Number(row.col_4||vals[3]||0))}</div><div class="font-black">${Math.round(Number(row.col_5||vals[4]||0))}</div><div class="flex justify-center">${dot}</div></div>`;
+                    });
+                } document.getElementById('stat-sku').innerText = skuCount;
+
+                // 2. Traceability
+                bCont.innerHTML = ''; let cA=0, cB=0, cC=0, cE=0;
+                let logData = [];
+                if(reqLog.status === 'fulfilled') { let r = await reqLog.value.json(); logData = Array.isArray(r) ? r[0].data || r : r.data; }
+                
+                if(reqStock.status === 'fulfilled') {
+                    let r = await reqStock.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
+                    (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
+                        const row = item.json || item; const bDateStr = row.Tanggal || row.col_1;
+                        if(!bDateStr || bDateStr.toUpperCase() === 'TANGGAL') return;
+                        
+                        let bDate = bDateStr.includes('/') ? new Date(bDateStr.split('/')[2], bDateStr.split('/')[1]-1, bDateStr.split('/')[0]) : new Date(bDateStr);
+                        const now = new Date(); let age = 0;
+                        if(!isNaN(bDate)) age = ((now.getFullYear() - bDate.getFullYear()) * 12) - bDate.getMonth() + now.getMonth();
+                        if(age < 0) age = 0;
+
+                        let grade="", bg="", c=""; 
+                        if(age <= 5) { grade="GRADE A"; c="text-appgreen"; bg="bg-appgreen"; cA++; }
+                        else if(age <= 8) { grade="GRADE B"; c="text-appappleblue"; bg="bg-appappleblue"; cB++; }
+                        else if(age <= 11) { grade="GRADE C"; c="text-appappleorange"; bg="bg-appappleorange"; cC++; }
+                        else { grade="EXPIRED"; c="text-white"; bg="bg-appred"; cE++; }
+
+                        let locs = [];
+                        logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(bDateStr) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
+                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5">${locs.map(dc => `<span class="bg-black text-[8px] px-2 py-1 rounded border border-white/10 font-bold">${dc}</span>`).join('')}</div>` : `<span class="text-[8px] text-gray-500 italic">Belum ada sebaran</span>`;
+
+                        bCont.innerHTML += `<div class="bg-appcard p-4 rounded-3xl border border-white/7 animate-fade" style="animation-delay:${idx*30}ms;opacity:0"><div class="flex justify-between mb-3"><h4 class="font-black uppercase">BATCH: <span class="text-appappleblue">${bDateStr}</span></h4><div class="px-2 py-1 rounded border border-current ${c} text-[8px] font-black">${grade}</div></div><div class="w-full bg-black rounded-full h-2 mb-3 overflow-hidden"><div class="${bg} h-full" style="width:${Math.min((age/12)*100,100)}%"></div></div><p class="text-[8px] text-gray-500 font-bold uppercase mb-1">📍 Sebaran DC:</p>${locH}</div>`;
+                    });
+                }
+                document.getElementById('stat-grade-a').innerText = cA; document.getElementById('stat-grade-b').innerText = cB; document.getElementById('stat-grade-c').innerText = cC; document.getElementById('stat-grade-exp').innerText = cE;
+
+                // 3. Diagnose
+                dCont.innerHTML = ''; let dcCount = 0;
+                if(reqDiag.status === 'fulfilled') {
+                    let r = await reqDiag.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
+                    (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
+                        const row = item.json || item; const dc = row.dc || row.col_2; if(!dc || dc.includes("DIAGNOSE")) return;
+                        dcCount++; const res = String(row.res || row.col_9 || "").toUpperCase();
+                        let bc = "text-appappleorange"; if(res.includes("FAIL")) bc = "text-appred"; else if(res.includes("ABOVE")||res.includes("SAFE")) bc = "text-appgreen";
+                        dCont.innerHTML += `<div class="bg-appcard p-5 rounded-4xl border border-white/7 animate-fade" style="animation-delay:${idx*30}ms;opacity:0"><div class="flex justify-between items-center mb-4"><h4 class="text-sm font-black truncate w-32">${dc}</h4><p class="text-[8px] font-bold ${bc} bg-black px-2 py-1 rounded">⚠️ ${res}</p></div><div class="grid grid-cols-3 text-center bg-black/50 p-3 rounded-2xl"><div class="border-r border-white/10"><p class="text-[7px] text-gray-500 font-bold mb-1">Fail</p><p class="text-xs font-black text-appred">${row.failPct||Math.round((row.col_4||0)*100)}%</p></div><div class="border-r border-white/10"><p class="text-[7px] text-gray-500 font-bold mb-1">Under</p><p class="text-xs font-black text-appappleorange">${row.moqPct||Math.round((row.col_6||0)*100)}%</p></div><div><p class="text-[7px] text-gray-500 font-bold mb-1">Above</p><p class="text-xs font-black text-appgreen">${row.abovePct||Math.round((row.col_8||0)*100)}%</p></div></div></div>`;
+                    });
+                } document.getElementById('stat-dc').innerText = dcCount;
+
+            } catch(e) { console.error(e); } finally { icn.classList.remove('fa-spin'); }
+        }
+    </script>
+</body>
+</html>
