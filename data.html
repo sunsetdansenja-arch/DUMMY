@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FFI - Database History</title>
+    
+    <link rel="icon" type="image/png" href="./LOGO FFI.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        appbg: '#000000', appcard: '#1C1C1E', appinput: '#2C2C2E',
+                        appapplered: '#FF3B30', appappleblue: '#ADD8E6', appappleorange: '#FF9500', appgreen: '#34C759', appred: '#FF3B30'
+                    },
+                    borderRadius: { '4xl': '2rem' },
+                    fontFamily: { 'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+        
+        input { background-color: #2C2C2E; border: 1.5px solid transparent; transition: all 0.25s; color: white; width: 100%; border-radius: 1.25rem; padding: 1.1rem 1.4rem; outline: none; font-weight: 600; font-size: 0.95rem; }
+        input:focus { border-color: #FF3B30; background-color: #1C1C1E; box-shadow: 0 0 15px rgba(255,59,48,0.25); }
+        
+        .btn-tactile { transition: transform 0.1s; cursor: pointer; }
+        .btn-tactile:active { transform: scale(0.96); }
+        
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.45s ease-out, opacity 0.35s; opacity: 0; }
+        .accordion-expanded { max-height: 800px; opacity: 1; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; margin-top: 0.75rem; }
+        
+        #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toast-show { transform: translateY(0) !important; }
+        
+        .skeleton-box { position: relative; overflow: hidden; background-color: #1C1C1E; }
+        .skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeInUp 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="flex justify-center antialiased">
+
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none">
+        <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
+    </div>
+
+    <div class="w-full max-w-md md:max-w-3xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5 pb-20">
+        
+        <!-- Header Nav -->
+        <div class="px-6 py-5 sticky top-0 bg-[#000000]/92 backdrop-blur-xl z-20 flex justify-between items-center border-b border-white/5">
+            <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-transform active:scale-95 text-xs flex items-center gap-2 font-extrabold tracking-widest">
+                <i class="fa-solid fa-chevron-left"></i> LOBBY
+            </button>
+            <h2 class="text-sm font-black text-appgreen tracking-widest uppercase">Database Log</h2>
+            <div class="w-16"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="p-6 md:p-10 space-y-6 animate-fade">
+            <!-- Search & Sync -->
+            <div class="flex gap-3 items-stretch">
+                <input type="text" id="search-po" placeholder="Cari ID PO atau DC Gudang..." onkeyup="filterLogLocal()">
+                <button type="button" onclick="loadLogPO()" id="btn-sync-log" class="bg-appgreen text-black w-14 md:w-16 rounded-2xl flex justify-center items-center btn-tactile shadow-[0_0_15px_rgba(52,199,89,0.2)]">
+                    <i class="fa-solid fa-rotate-right text-lg" id="sync-icon"></i>
+                </button>
+            </div>
+
+            <!-- Container List Kartu Log -->
+            <div id="log-container" class="grid grid-cols-1 gap-4 pb-10">
+                <!-- Diisi otomatis oleh JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+        let activeLogData = [];
+
+        window.onload = () => {
+            if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+            loadLogPO();
+        };
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
+            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white'}`;
+            t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
+        }
+
+        async function loadLogPO() {
+            const icn = document.getElementById('sync-icon'); if(icn) icn.classList.add('fa-spin');
+            const cont = document.getElementById('log-container'); 
+            cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-3xl h-24 w-full mb-2"></div>`).join('');
+            
+            try {
+                const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) });
+                const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
+                
+                if (data && data.status === "success") {
+                    activeLogData = data.data || [];
+                    renderLogs(activeLogData);
+                } else { showToast("Gagal mengambil data", true); }
+            } catch(e) { showToast("Koneksi Server Error", true); } finally { if(icn) icn.classList.remove('fa-spin'); }
+        }
+
+        function filterLogLocal() { 
+            const q = document.getElementById('search-po').value.toLowerCase(); 
+            renderLogs(activeLogData.filter(i => (i.ID && i.ID.toLowerCase().includes(q)) || (i.DC && i.DC.toLowerCase().includes(q)))); 
+        }
+
+        function renderLogs(data) {
+            const cont = document.getElementById('log-container'); if(!cont) return; cont.innerHTML = '';
+            if(!data.length) { cont.innerHTML = `<p class="text-center italic opacity-30 text-sm py-10">Tidak ada riwayat data...</p>`; return; }
+
+            data.forEach((item, idx) => {
+                if(!item.ID) return;
+                const isBatal = String(item["PO NKA"]).includes("BATAL") || (Number(item["TOTAL PO ctn"]||0) === 0 && (Number(item["Qty Terpenuhi (Kirim)"]||0) === 0));
+                const poQty = Number(item["TOTAL PO ctn"]) || 0;
+                const salesQty = Number(item["Qty Terpenuhi (Kirim)"]) || (Number(item["NKA"]||0) + Number(item["NDLH"]||0) + Number(item["NRD"]||0) + Number(item["NARR"]||0) + Number(item["NKACH"]||0));
+                const batchInfo = item.BATCHES || item.batches || "-";
+
+                let border = "border-white/5", text = "text-appred", icon = "fa-circle-xmark", cardBg = "bg-appcard", badge = "";
+                if (isBatal) { border = "border-appred/40"; cardBg = "bg-[#1A0505]"; icon = "fa-ban"; badge = `<div class="absolute top-3 right-3 bg-appred text-white text-[8px] font-black px-2 py-0.5 rounded">VOID</div>`; }
+                else if (salesQty >= (poQty * 0.85)) { border = "border-appgreen/30"; text = "text-appgreen"; icon = "fa-circle-check"; }
+                else if (salesQty > 0) { border = "border-appappleorange/30"; text = "text-appappleorange"; icon = "fa-clock-rotate-left"; }
+
+                cont.innerHTML += `
+                <div class="${cardBg} rounded-3xl border ${border} overflow-hidden relative animate-fade" style="animation-delay:${idx*20}ms; opacity:0">
+                    ${badge}
+                    <div class="p-5 flex items-center justify-between cursor-pointer btn-tactile" onclick="toggleCard('${item.ID}')">
+                        <div class="flex items-center gap-4 w-2/3">
+                            <div class="w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center border border-white/5 ${isBatal?'text-appred':text}"><i class="fa-solid ${icon} text-lg"></i></div>
+                            <div class="min-w-0"><h4 class="font-black text-sm uppercase truncate ${isBatal?'text-gray-500':''}">${item.ID}</h4><p class="text-[10px] text-gray-500 font-bold uppercase mt-1 truncate">${item.DC} • ${item["Tanggal PO"]}</p></div>
+                        </div>
+                        <div class="text-right"><p class="text-[8px] text-gray-600 uppercase font-black tracking-widest mb-0.5">PO / SALES</p><p class="text-sm font-black ${isBatal?'text-gray-600':text}">${poQty} / ${salesQty}</p></div>
+                    </div>
+                    <div id="det-${item.ID}" class="accordion-content bg-black/40 px-5 pb-5 pt-0">
+                        <div class="bg-black/60 p-2.5 rounded-xl border border-white/5 mb-3 text-center"><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Tag Batch Terikat</p><p class="text-[10px] text-appappleblue font-black tracking-wider uppercase">${batchInfo}</p></div>
+                        <div class="space-y-1.5 text-[10px] font-extrabold uppercase">
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NKA</span><span>${item["PO NKA"]||0} ➔ <span class="text-appappleblue">${item["NKA"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NDLH</span><span>${item["PO NDLH"]||0} ➔ <span class="text-appappleblue">${item["NDLH"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NRD</span><span>${item["PO NRD"]||0} ➔ <span class="text-appappleblue">${item["NRD"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NARR</span><span>${item["PO NARR"]||0} ➔ <span class="text-appappleblue">${item["NARR"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NKACH</span><span>${item["PO NKACH"]||0} ➔ <span class="text-appgreen">${item["NKACH"]||0}</span></span></div>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-white/5 pt-4 mt-4">
+                            <div><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">GAP Supply</p><p class="text-sm font-black ${item["GAP"]==0?'text-appgreen':'text-appred'}">${item["GAP"]||0} CTN</p></div>
+                            <button type="button" onclick="deletePO('${item.ID}')" class="bg-appred/10 text-appred border border-appred/20 font-extrabold text-[9px] py-2 px-4 rounded-xl btn-tactile hover:bg-appred hover:text-white ${isBatal?'hidden-tab':''}"><i class="fa-solid fa-trash mr-1.5"></i>BATAL PO</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+        function toggleCard(id) { document.getElementById('det-' + id).classList.toggle('accordion-expanded'); }
+
+        async function deletePO(id) {
+            if(!confirm(`Apakah Anda yakin ingin membatalkan/void transaksi PO: ${id}?`)) return;
+            const res = await sendApi({ action: "delete", id: id });
+            if(res && res.status === "success") { showToast(`PO ${id} Berhasil Dibatalkan!`); loadLogPO(); } else { showToast("Gagal void data", true); }
+        }
+    </script>
+</body>
+</html>
