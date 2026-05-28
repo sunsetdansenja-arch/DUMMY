@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FFI - Input Operasional</title>
+    
+    <link rel="icon" type="image/png" href="./LOGO FFI.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        appbg: '#000000', appcard: '#1C1C1E', appinput: '#2C2C2E',
+                        appapplered: '#FF3B30', appappleblue: '#ADD8E6', appappleorange: '#FF9500', appgreen: '#34C759', appred: '#FF3B30'
+                    },
+                    borderRadius: { '3xl': '1.5rem', '4xl': '2rem' },
+                    fontFamily: { 'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .hidden-tab { display: none !important; }
+        input, select { background-color: #2C2C2E; border: 1.5px solid transparent; transition: all 0.25s; color: white; width: 100%; border-radius: 1.25rem; padding: 1.1rem 1.4rem; outline: none; font-weight: 600; font-size: 0.95rem; }
+        input:focus, select:focus { border-color: #FF3B30; background-color: #1C1C1E; box-shadow: 0 0 15px rgba(255,59,48,0.25); }
+        select[multiple] { height: 120px; padding: 0.5rem; scrollbar-width: none; }
+        select[multiple] option { padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 0.25rem; background-color: rgba(255,255,255,0.05); font-size: 0.85rem; font-weight: 800; cursor: pointer; }
+        select[multiple] option:checked { background-color: #FF3B30; color: white; }
+        .btn-tactile { transition: transform 0.1s; cursor: pointer; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+        .btn-tactile:active { transform: scale(0.96); }
+        #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toast-show { transform: translateY(0) !important; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .sku-input { padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; text-align: center; font-weight: 900; }
+        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeInUp 0.4s ease-out forwards; }
+    </style>
+</head>
+<body class="flex justify-center antialiased">
+
+    <datalist id="date-recom"></datalist>
+    <datalist id="recent-po-ids"></datalist>
+
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none">
+        <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
+    </div>
+
+    <!-- DC Modal -->
+    <div id="modal-dc" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] hidden-tab flex flex-col px-4 pt-12 pb-6">
+        <div class="w-full max-w-4xl mx-auto flex flex-col h-full">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-white font-black text-2xl italic text-appapplered px-2">Pilih Nama DC</h3>
+                <button type="button" onclick="closeDCModal()" class="text-gray-400 bg-white/10 p-3 rounded-full btn-tactile">✕</button>
+            </div>
+            <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3.5 overflow-y-auto pb-10 flex-1 px-2" id="dc-grid"></div>
+        </div>
+    </div>
+
+    <div class="w-full max-w-md md:max-w-3xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5 pb-20">
+        
+        <!-- Header Nav -->
+        <div class="px-6 py-5 sticky top-0 bg-[#000000]/92 backdrop-blur-xl z-20 flex justify-between items-center border-b border-white/5">
+            <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white btn-tactile text-xs flex items-center gap-2">
+                <i class="fa-solid fa-chevron-left"></i> LOBBY
+            </button>
+            <h2 class="text-sm font-black text-white tracking-widest uppercase">Input Data</h2>
+            <div class="w-16"></div> <!-- Spacer for center alignment -->
+        </div>
+
+        <div class="p-6 md:p-10 animate-fade">
+            <!-- Segmented Control -->
+            <div class="flex bg-appcard p-1.5 rounded-2xl border border-white/7 shadow-xl mb-8">
+                <button type="button" onclick="switchForm('po')" id="btn-form-po" class="flex-1 py-3 rounded-xl text-xs font-extrabold uppercase transition-all bg-appapplered text-white shadow-[0_0_15px_rgba(255,59,48,0.3)]">New PO</button>
+                <button type="button" onclick="switchForm('sales')" id="btn-form-sales" class="flex-1 py-3 rounded-xl text-xs font-extrabold uppercase transition-all text-gray-500 bg-transparent">Sales</button>
+                <button type="button" onclick="switchForm('stock')" id="btn-form-stock" class="flex-1 py-3 rounded-xl text-xs font-extrabold uppercase transition-all text-gray-500 bg-transparent">Stock</button>
+            </div>
+
+            <!-- FORM NEW PO -->
+            <form id="form-po" onsubmit="submitAction(event, 'insert_po')" class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/7 shadow-[0_0_25px_rgba(255,59,48,0.15)]">
+                <div class="space-y-4">
+                    <input type="text" id="po-id" placeholder="ID PO (CTH: JKT01...)" required class="uppercase">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="po-tanggal" list="date-recom" autocomplete="off" placeholder="Tgl PO" required>
+                        <input type="text" id="po-exp" list="date-recom" autocomplete="off" placeholder="Tgl EXP" required>
+                        <div class="relative cursor-pointer btn-tactile col-span-2" onclick="openDCModal('po-dc')">
+                            <input type="text" id="po-dc" placeholder="PILIH NAMA DC" required readonly class="pointer-events-none uppercase bg-appapplered/10 border border-appapplered/30 text-appapplered">
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-white/5">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Kuantitas PO (Ctn)</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appapplered"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKA</label><input type="number" id="po-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appapplered"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NDLH</label><input type="number" id="po-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appapplered"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NRD</label><input type="number" id="po-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appapplered"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NARR</label><input type="number" id="po-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="col-span-2 md:col-span-1 bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appapplered"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKACH</label><input type="number" id="po-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-appapplered text-white font-extrabold py-4 rounded-2xl btn-tactile mt-6">SUBMIT PO</button>
+            </form>
+
+            <!-- FORM SALES -->
+            <form id="form-sales" onsubmit="submitAction(event, 'insert_sales')" class="hidden-tab space-y-6 bg-appcard p-6 rounded-4xl border border-white/7">
+                <div class="space-y-4">
+                    <input type="text" id="sls-id" list="recent-po-ids" autocomplete="off" placeholder="ID PO DATABASE" required class="uppercase">
+                    <div class="bg-black/40 p-4 rounded-3xl border border-white/5">
+                        <label class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-2 block">Tag Batch Pengiriman (Bisa > 1)</label>
+                        <select id="sls-batches" multiple required class="bg-appbg w-full rounded-2xl border border-white/10 outline-none focus:border-appappleblue"></select>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-white/5">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Realisasi Sales (Ctn)</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appappleblue"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKA</label><input type="number" id="sls-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appappleblue"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NDLH</label><input type="number" id="sls-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appappleblue"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NRD</label><input type="number" id="sls-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appappleblue"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NARR</label><input type="number" id="sls-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="col-span-2 md:col-span-1 bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appappleblue"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKACH</label><input type="number" id="sls-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-appappleblue text-black font-extrabold py-4 rounded-2xl btn-tactile mt-6">UPDATE SALES</button>
+            </form>
+
+            <!-- FORM STOCK -->
+            <form id="form-stock" onsubmit="submitAction(event, 'insert_stock')" class="hidden-tab space-y-6 bg-appcard p-6 rounded-4xl border border-white/7">
+                <input type="text" id="stk-tanggal" list="date-recom" autocomplete="off" placeholder="Tanggal (DD/MM/YYYY)" required>
+                <div class="pt-6 border-t border-white/5">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">Fisik Stock (Ctn)</p>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appgreen"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKA</label><input type="number" id="stk-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appgreen"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NDLH</label><input type="number" id="stk-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appgreen"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NRD</label><input type="number" id="stk-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appgreen"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NARR</label><input type="number" id="stk-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                        <div class="col-span-2 md:col-span-1 bg-black/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center justify-center focus-within:border-appgreen"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKACH</label><input type="number" id="stk-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-2xl btn-tactile mt-6">UPDATE STOCK</button>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+        const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
+        let targetDCInput = "";
+
+        window.onload = () => {
+            if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+            initDates(); initDCPicker();
+            loadPODataForSales(); loadBatchesForTagging();
+        };
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
+            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white'}`;
+            t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
+        }
+
+        async function sendApi(payload, btnElement = null, originalText = "") {
+            if(btnElement) { btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btnElement.classList.add('opacity-50', 'pointer-events-none'); }
+            try {
+                const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
+                if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
+                return Array.isArray(data) ? data[0] : data;
+            } catch(e) { if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); } return null; }
+        }
+
+        function initDates() {
+            const dl = document.getElementById('date-recom'); dl.innerHTML = ''; const today = new Date();
+            for(let i=0; i<=3; i++) {
+                const d = new Date(today); d.setDate(d.getDate() - i);
+                dl.innerHTML += `<option value="${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}">`;
+            }
+        }
+
+        function initDCPicker() {
+            const grid = document.getElementById('dc-grid');
+            grid.innerHTML = DC_LIST.map(dc => `<button type="button" onclick="selectDC('${dc}')" class="bg-appcard border border-white/5 text-gray-300 text-[10px] font-extrabold py-5 rounded-2xl btn-tactile hover:text-appapplered transition-all uppercase">${dc}</button>`).join('');
+        }
+        function openDCModal(id) { targetDCInput = id; document.getElementById('modal-dc').classList.remove('hidden-tab'); }
+        function closeDCModal() { document.getElementById('modal-dc').classList.add('hidden-tab'); }
+        function selectDC(dc) { document.getElementById(targetDCInput).value = dc; closeDCModal(); }
+
+        function switchForm(type) {
+            ['po', 'sales', 'stock'].forEach(id => document.getElementById('form-' + id).classList.add('hidden-tab'));
+            ['btn-form-po', 'btn-form-sales', 'btn-form-stock'].forEach(id => document.getElementById(id).className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase transition-all text-gray-500 bg-transparent");
+            
+            document.getElementById('form-' + type).classList.remove('hidden-tab');
+            const btn = document.getElementById('btn-form-' + type);
+            if(type === 'po') btn.className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appapplered text-white shadow-[0_0_15px_rgba(255,59,48,0.3)]";
+            if(type === 'sales') btn.className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appappleblue text-black shadow-[0_0_15px_rgba(173,216,230,0.3)]";
+            if(type === 'stock') btn.className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appgreen text-black shadow-[0_0_15px_rgba(52,199,89,0.3)]";
+        }
+
+        async function loadPODataForSales() {
+            const res = await sendApi({ action: "load_admin" });
+            if (res && res.status === "success" && res.data) {
+                const dl = document.getElementById('recent-po-ids'); dl.innerHTML = ''; let count = 0;
+                res.data.forEach(item => { if(item.ID && count < 20 && !String(item["PO NKA"]).includes("BATAL")) { dl.innerHTML += `<option value="${item.ID}">`; count++; } });
+            }
+        }
+
+        async function loadBatchesForTagging() {
+            const res = await sendApi({ action: "get_db_stock" });
+            if (res) {
+                let rData = Array.isArray(res) ? (res[0].data || res) : (res.data || [res]);
+                const sel = document.getElementById('sls-batches'); sel.innerHTML = '';
+                rData.forEach(item => {
+                    const row = item.json || item; const dateStr = row.Tanggal || row.tanggal || row.col_1;
+                    if(dateStr && String(dateStr).toUpperCase() !== 'TANGGAL') sel.innerHTML += `<option value="${dateStr}">${dateStr}</option>`;
+                });
+            }
+        }
+
+        async function submitAction(e, act) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]'); 
+            let payload = { action: act }; 
+            const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : "";
+            
+            if(act === 'insert_po') { 
+                payload = { ...payload, id: getVal('po-id').toUpperCase(), tanggal_po: getVal('po-tanggal'), tanggal_exp: getVal('po-exp'), dc: getVal('po-dc').toUpperCase(), po_nka: getVal('po-nka'), po_ndlh: getVal('po-ndlh'), po_nrd: getVal('po-nrd'), po_narr: getVal('po-narr'), po_nkach: getVal('po-nkach') }; 
+            } else if(act === 'insert_sales') { 
+                const selBatches = document.getElementById('sls-batches'); let selected = [];
+                for (let option of selBatches.options) { if (option.selected) selected.push(option.value); }
+                payload = { ...payload, id: getVal('sls-id').toUpperCase(), nka: getVal('sls-nka'), ndlh: getVal('sls-ndlh'), nrd: getVal('sls-nrd'), narr: getVal('sls-narr'), nkach: getVal('sls-nkach'), batches: selected.length ? selected.join(", ") : "-" }; 
+            } else if(act === 'insert_stock') { 
+                payload = { ...payload, tanggal: getVal('stk-tanggal'), nka: getVal('stk-nka'), ndlh: getVal('stk-ndlh'), nrd: getVal('stk-nrd'), narr: getVal('stk-narr'), nkach: getVal('stk-nkach') }; 
+            }
+            
+            const res = await sendApi(payload, btn, btn.innerText);
+            if(res && res.status === "success") { showToast("Data Tersimpan!"); e.target.reset(); } else showToast("Gagal menyimpan", true);
+        }
+    </script>
+</body>
+</html>
