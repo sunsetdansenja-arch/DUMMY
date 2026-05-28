@@ -31,7 +31,9 @@
     </script>
     <style>
         body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .hidden-view { display: none !important; }
+        
+        /* Trik agar tidak flash/berkedip saat cek login */
+        #view-login, #view-lobby { display: none; }
         
         input { background-color: #2C2C2E; border: 1.5px solid transparent; transition: all 0.25s; color: white; width: 100%; border-radius: 1.25rem; padding: 1.1rem 1.4rem; outline: none; font-weight: 600; font-size: 0.95rem; }
         input:focus { border-color: #FF3B30; background-color: #1C1C1E; box-shadow: 0 0 15px rgba(255,59,48,0.25); }
@@ -48,14 +50,14 @@
 <body class="flex justify-center antialiased font-apple h-screen overflow-hidden">
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none">
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none shadow-[0_0_20px_rgba(255,59,48,0.4)]">
         <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
     </div>
 
     <div class="w-full max-w-md md:max-w-xl bg-appbg h-full relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5">
         
         <!-- LAYAR LOGIN -->
-        <div id="view-login" class="flex flex-col h-full p-9 justify-center items-center relative z-40">
+        <div id="view-login" class="flex-col h-full p-9 justify-center items-center relative z-40">
             <div class="w-full max-w-sm space-y-12">
                 <div class="text-center space-y-4">
                     <img src="./LOGO FFI.png" alt="Family Food Logo" onerror="this.src='https://via.placeholder.com/150/FF3B30/FFFFFF?text=FFI'" class="w-36 md:w-48 h-auto mx-auto mb-8 drop-shadow-[0_0_20px_rgba(255,59,48,0.4)] animate-fade">
@@ -70,56 +72,61 @@
         </div>
 
         <!-- LAYAR LOBBY (DASHBOARD MENU) -->
-        <div id="view-lobby" class="hidden-view flex-col h-full bg-[#000000] relative">
-            <div class="px-8 py-10 pb-6">
-                <div class="flex justify-between items-center mb-10">
-                    <div>
-                        <p class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-1">Selamat Datang,</p>
-                        <h2 id="header-username" class="text-2xl md:text-3xl font-black text-white uppercase">USER</h2>
-                    </div>
-                    <img src="./LOGO FFI.png" alt="Logo" class="w-14 h-14 object-contain drop-shadow-[0_0_10px_rgba(255,59,48,0.3)]">
+        <div id="view-lobby" class="flex-col h-full bg-[#000000] relative">
+            
+            <!-- Mengembalikan Header Original FFI -->
+            <div class="px-6 py-5 md:px-8 border-b border-white/5 bg-[#000000]/92 backdrop-blur-xl sticky top-0 z-20 flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <img src="./LOGO FFI.png" alt="Family Food Logo" onerror="this.src='https://via.placeholder.com/50/FF3B30/FFFFFF?text=FFI'" class="h-9 md:h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(255,59,48,0.25)]">
+                    <h2 class="text-lg md:text-2xl font-black text-white tracking-tighter italic leading-none uppercase">Family<span class="text-appappleorange">Food</span></h2>
                 </div>
-                
-                <h3 class="text-xs font-black text-appappleblue uppercase tracking-[0.2em] mb-4">Akses Modul Sistem</h3>
+                <div class="flex items-center gap-2 bg-white/10 px-4 py-2 md:px-5 md:py-2.5 rounded-full">
+                    <span class="w-2.5 h-2.5 rounded-full bg-appgreen animate-pulse shadow-[0_0_8px_#34C759]"></span>
+                    <p id="header-username" class="text-[10px] md:text-xs text-gray-300 uppercase font-extrabold tracking-widest">USER</p>
+                </div>
+            </div>
+
+            <div class="px-6 py-8 md:px-8">
+                <h3 class="text-xs md:text-sm font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Akses Modul Sistem</h3>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <!-- Nav to Input -->
-                    <button onclick="goTo('input.html')" class="bg-appcard border border-white/10 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 btn-tactile shadow-[0_0_15px_rgba(255,59,48,0.1)] hover:border-appapplered transition-colors group">
-                        <div class="w-14 h-14 bg-appapplered/10 rounded-full flex items-center justify-center text-appapplered group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-plus text-2xl"></i>
+                    <button onclick="goTo('input.html')" class="bg-appcard border border-white/10 p-6 md:p-8 rounded-3xl flex flex-col items-center justify-center gap-4 md:gap-5 btn-tactile shadow-[0_0_15px_rgba(255,59,48,0.1)] hover:border-appapplered transition-colors group">
+                        <div class="w-14 h-14 md:w-16 md:h-16 bg-appapplered/10 rounded-full flex items-center justify-center text-appapplered group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-plus text-2xl md:text-3xl"></i>
                         </div>
-                        <span class="text-xs font-extrabold text-white uppercase tracking-widest text-center">Input<br>Operasional</span>
+                        <span class="text-[10px] md:text-xs font-extrabold text-white uppercase tracking-widest text-center leading-relaxed">Input<br>Operasional</span>
                     </button>
                     
                     <!-- Nav to Analytic -->
-                    <button onclick="goTo('analytic.html')" class="bg-appcard border border-white/10 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 btn-tactile shadow-[0_0_15px_rgba(173,216,230,0.1)] hover:border-appappleblue transition-colors group">
-                        <div class="w-14 h-14 bg-appappleblue/10 rounded-full flex items-center justify-center text-appappleblue group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-chart-simple text-2xl"></i>
+                    <button onclick="goTo('analytic.html')" class="bg-appcard border border-white/10 p-6 md:p-8 rounded-3xl flex flex-col items-center justify-center gap-4 md:gap-5 btn-tactile shadow-[0_0_15px_rgba(173,216,230,0.1)] hover:border-appappleblue transition-colors group">
+                        <div class="w-14 h-14 md:w-16 md:h-16 bg-appappleblue/10 rounded-full flex items-center justify-center text-appappleblue group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-chart-simple text-2xl md:text-3xl"></i>
                         </div>
-                        <span class="text-xs font-extrabold text-white uppercase tracking-widest text-center">Analytic<br>& QC</span>
+                        <span class="text-[10px] md:text-xs font-extrabold text-white uppercase tracking-widest text-center leading-relaxed">Analytic<br>& QC</span>
                     </button>
 
                     <!-- Nav to Data Log -->
-                    <button onclick="goTo('data.html')" class="bg-appcard border border-white/10 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 btn-tactile shadow-[0_0_15px_rgba(52,199,89,0.1)] hover:border-appgreen transition-colors group">
-                        <div class="w-14 h-14 bg-appgreen/10 rounded-full flex items-center justify-center text-appgreen group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-database text-2xl"></i>
+                    <button onclick="goTo('data.html')" class="bg-appcard border border-white/10 p-6 md:p-8 rounded-3xl flex flex-col items-center justify-center gap-4 md:gap-5 btn-tactile shadow-[0_0_15px_rgba(52,199,89,0.1)] hover:border-appgreen transition-colors group">
+                        <div class="w-14 h-14 md:w-16 md:h-16 bg-appgreen/10 rounded-full flex items-center justify-center text-appgreen group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-database text-2xl md:text-3xl"></i>
                         </div>
-                        <span class="text-xs font-extrabold text-white uppercase tracking-widest text-center">Database<br>History</span>
+                        <span class="text-[10px] md:text-xs font-extrabold text-white uppercase tracking-widest text-center leading-relaxed">Database<br>History</span>
                     </button>
 
                     <!-- Nav to Report -->
-                    <button onclick="goTo('report.html')" class="bg-appcard border border-white/10 p-6 rounded-3xl flex flex-col items-center justify-center gap-4 btn-tactile shadow-[0_0_15px_rgba(255,149,0,0.1)] hover:border-appappleorange transition-colors group">
-                        <div class="w-14 h-14 bg-appappleorange/10 rounded-full flex items-center justify-center text-appappleorange group-hover:scale-110 transition-transform">
-                            <i class="fa-solid fa-file-pdf text-2xl"></i>
+                    <button onclick="goTo('report.html')" class="bg-appcard border border-white/10 p-6 md:p-8 rounded-3xl flex flex-col items-center justify-center gap-4 md:gap-5 btn-tactile shadow-[0_0_15px_rgba(255,149,0,0.1)] hover:border-appappleorange transition-colors group">
+                        <div class="w-14 h-14 md:w-16 md:h-16 bg-appappleorange/10 rounded-full flex items-center justify-center text-appappleorange group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-file-pdf text-2xl md:text-3xl"></i>
                         </div>
-                        <span class="text-xs font-extrabold text-white uppercase tracking-widest text-center">Cetak<br>Laporan</span>
+                        <span class="text-[10px] md:text-xs font-extrabold text-white uppercase tracking-widest text-center leading-relaxed">Cetak<br>Laporan</span>
                     </button>
                 </div>
             </div>
 
             <!-- Logout Button -->
-            <div class="absolute bottom-10 w-full px-8">
-                <button onclick="logout()" class="w-full bg-white/5 border border-white/10 text-gray-400 font-extrabold py-4 rounded-2xl btn-tactile hover:bg-appred/10 hover:text-appred hover:border-appred/30 transition-colors text-xs uppercase tracking-widest">
+            <div class="absolute bottom-10 w-full px-6 md:px-8">
+                <button onclick="logout()" class="w-full bg-white/5 border border-white/10 text-gray-400 font-extrabold py-4 md:py-5 rounded-2xl btn-tactile hover:bg-appred/10 hover:text-appred hover:border-appred/30 transition-colors text-[10px] md:text-xs uppercase tracking-widest">
                     <i class="fa-solid fa-arrow-right-from-bracket mr-2"></i> KELUAR SISTEM
                 </button>
             </div>
@@ -129,22 +136,20 @@
     <script>
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
 
-        window.onload = () => {
-            const savedUser = localStorage.getItem('ffi_user');
-            if(savedUser) {
-                // Bypass login
-                document.getElementById('view-login').classList.add('hidden-view');
-                document.getElementById('view-lobby').classList.remove('hidden-view');
-                document.getElementById('view-lobby').classList.add('flex');
-                document.getElementById('header-username').innerText = savedUser;
-            }
-        };
+        // Mencegah Flash Layar Login
+        const savedUser = localStorage.getItem('ffi_user');
+        if(savedUser) {
+            document.getElementById('view-lobby').style.display = 'flex';
+            document.getElementById('header-username').innerText = savedUser;
+        } else {
+            document.getElementById('view-login').style.display = 'flex';
+        }
 
         function showToast(msg, isError = false) {
             const t = document.getElementById('toast'); 
             document.getElementById('toast-msg').innerText = msg; 
             document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
-            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white shadow-[0_0_20px_rgba(52,199,89,0.3)]'}`;
+            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 shadow-[0_0_20px_rgba(0,0,0,0.5)] ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white shadow-[0_0_20px_rgba(52,199,89,0.3)]'}`;
             t.classList.add('toast-show'); 
             setTimeout(() => t.classList.remove('toast-show'), 3000);
         }
@@ -164,14 +169,17 @@
                     headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ action: "login", user_id: user, password: pass }) 
                 });
-                const dataRaw = await res.json();
-                const data = Array.isArray(dataRaw) ? dataRaw[0] : dataRaw;
+                
+                // Menyamakan parser login dengan versi HTML monolithic lama agar tidak error
+                const textData = await res.text();
+                let data;
+                try { data = JSON.parse(textData); } catch(err) { data = { status: "error", message: textData }; }
+                data = Array.isArray(data) ? data[0] : data;
 
                 if (data && data.status === "success") {
                     localStorage.setItem('ffi_user', data.user_id || user); 
-                    document.getElementById('view-login').classList.add('hidden-view'); 
-                    document.getElementById('view-lobby').classList.remove('hidden-view'); 
-                    document.getElementById('view-lobby').classList.add('flex'); 
+                    document.getElementById('view-login').style.display = 'none'; 
+                    document.getElementById('view-lobby').style.display = 'flex'; 
                     document.getElementById('header-username').innerText = data.user_id || user;
                 } else {
                     showToast(data ? data.message : "Akses Ditolak", true);
