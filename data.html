@@ -48,7 +48,7 @@
 </head>
 <body class="flex justify-center antialiased">
 
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none">
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none shadow-[0_0_15px_rgba(0,0,0,0.5)]">
         <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
     </div>
 
@@ -84,31 +84,42 @@
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
         let activeLogData = [];
 
-        window.onload = () => {
+        document.addEventListener('DOMContentLoaded', () => {
             if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
-            loadLogPO();
-        };
+            setTimeout(() => { loadLogPO(); }, 100);
+        });
 
         function showToast(msg, isError = false) {
             const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
-            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white'}`;
+            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white'}`;
             t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
         }
 
-        async function loadLogPO() {
-            const icn = document.getElementById('sync-icon'); if(icn) icn.classList.add('fa-spin');
-            const cont = document.getElementById('log-container'); 
-            cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-3xl h-24 w-full mb-2"></div>`).join('');
-            
+        // PERBAIKAN: Mengembalikan fungsi sendApi khusus untuk data.html
+        async function sendApi(payload, btnElement = null, originalText = "") {
+            if(btnElement) { btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btnElement.classList.add('opacity-50', 'pointer-events-none'); }
             try {
-                const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) });
+                const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
-                
-                if (data && data.status === "success") {
-                    activeLogData = data.data || [];
-                    renderLogs(activeLogData);
-                } else { showToast("Gagal mengambil data", true); }
-            } catch(e) { showToast("Koneksi Server Error", true); } finally { if(icn) icn.classList.remove('fa-spin'); }
+                if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
+                return Array.isArray(data) ? data[0] : data;
+            } catch(e) { if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); } return null; }
+        }
+
+        async function loadLogPO() {
+            const btn = document.getElementById('btn-sync-log');
+            const cont = document.getElementById('log-container'); 
+            if(cont) cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-3xl h-24 w-full mb-2"></div>`).join('');
+            
+            // Pemanggilan Payload Action Load Admin
+            const res = await sendApi({ action: "load_admin" }, btn, `<i class="fa-solid fa-rotate-right text-lg"></i>`);
+            
+            if (res && res.status === "success") {
+                activeLogData = res.data || [];
+                renderLogs(activeLogData);
+            } else { 
+                showToast("Gagal mengambil data", true); 
+            }
         }
 
         function filterLogLocal() { 
@@ -161,10 +172,16 @@
         }
         function toggleCard(id) { document.getElementById('det-' + id).classList.toggle('accordion-expanded'); }
 
+        // Pemanggilan Payload Action Delete PO
         async function deletePO(id) {
             if(!confirm(`Apakah Anda yakin ingin membatalkan/void transaksi PO: ${id}?`)) return;
             const res = await sendApi({ action: "delete", id: id });
-            if(res && res.status === "success") { showToast(`PO ${id} Berhasil Dibatalkan!`); loadLogPO(); } else { showToast("Gagal void data", true); }
+            if(res && res.status === "success") { 
+                showToast(`PO ${id} Berhasil Dibatalkan!`); 
+                loadLogPO(); 
+            } else { 
+                showToast("Gagal void data", true); 
+            }
         }
     </script>
 </body>
