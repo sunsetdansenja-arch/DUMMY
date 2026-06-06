@@ -14,6 +14,9 @@
     <style>
         body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+        .hidden-tab { display: none !important; }
+        .btn-tactile { transition: transform 0.1s; cursor: pointer; }
+        .btn-tactile:active { transform: scale(0.96); }
         .skeleton-box { position: relative; overflow: hidden; background-color: #1C1C1E; }
         .skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shimmer 1.5s infinite; }
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
@@ -35,6 +38,7 @@
         </div>
 
         <div class="p-6 md:p-10 space-y-8 animate-fade">
+            <!-- Summary Stats -->
             <div class="flex gap-4">
                 <div class="flex-1 bg-appcard border border-white/7 p-6 rounded-4xl flex flex-col justify-between">
                     <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Total SKU</p>
@@ -46,26 +50,42 @@
                 </div>
             </div>
 
+            <!-- TRACEABILITY & AGE TRACKING -->
             <div class="space-y-4 pt-2">
                 <div class="bg-appappleorange/10 px-4 py-3 rounded-2xl border border-appappleorange/20 mb-4">
                     <h4 class="text-xs font-black text-appappleorange uppercase tracking-widest"><i class="fa-solid fa-radar mr-2"></i> TRACEABILITY BATCH</h4>
-                    <p class="text-[9px] text-gray-400 mt-1 font-bold">Menampilkan seluruh Batch beserta sisa waktu dan lokasi sebarannya.</p>
+                    <p class="text-[9px] text-gray-400 mt-1 font-bold">Pantau sisa umur kadaluarsa seluruh batch di lapangan.</p>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 px-1 mb-4">
-                    <div class="bg-appcard border border-appred/30 p-4 rounded-3xl text-center shadow-[0_0_15px_rgba(255,59,48,0.15)]">
-                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Critical (<= 3 Bln)</p>
-                        <p id="stat-grade-crit" class="text-3xl font-black text-appred ticker">0</p>
-                    </div>
-                    <div class="bg-appcard border border-appgreen/30 p-4 rounded-3xl text-center">
-                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Safe (> 3 Bln)</p>
-                        <p id="stat-grade-safe" class="text-3xl font-black text-appgreen ticker">0</p>
-                    </div>
+                <!-- KOTAK AKORDEON (BISA DIKLIK) -->
+                <div class="grid grid-cols-2 gap-3 px-1 mb-2">
+                    <button type="button" onclick="toggleBatchGroup('crit')" class="bg-[#1A0505] border border-appred/30 p-4 rounded-3xl text-center shadow-[0_0_15px_rgba(255,59,48,0.15)] btn-tactile group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-appred/5 group-hover:bg-appred/10 transition-colors"></div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1 relative z-10">Critical (<= 3 Bln)</p>
+                        <div class="flex items-center justify-center gap-2 relative z-10">
+                            <p id="stat-grade-crit" class="text-3xl font-black text-appred ticker">0</p>
+                            <i class="fa-solid fa-chevron-up text-appred text-[10px] transition-transform" id="icon-crit"></i>
+                        </div>
+                        <p class="text-[7px] text-appred uppercase tracking-widest mt-1.5 font-bold relative z-10 opacity-70">Ketuk Tuk Lihat</p>
+                    </button>
+
+                    <button type="button" onclick="toggleBatchGroup('safe')" class="bg-[#051A0A] border border-appgreen/30 p-4 rounded-3xl text-center shadow-[0_0_15px_rgba(52,199,89,0.05)] btn-tactile group relative overflow-hidden">
+                        <div class="absolute inset-0 bg-appgreen/5 group-hover:bg-appgreen/10 transition-colors"></div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1 relative z-10">Safe (> 3 Bln)</p>
+                        <div class="flex items-center justify-center gap-2 relative z-10">
+                            <p id="stat-grade-safe" class="text-3xl font-black text-appgreen ticker">0</p>
+                            <i class="fa-solid fa-chevron-down text-appgreen text-[10px] transition-transform" id="icon-safe"></i>
+                        </div>
+                        <p class="text-[7px] text-appgreen uppercase tracking-widest mt-1.5 font-bold relative z-10 opacity-70">Ketuk Tuk Lihat</p>
+                    </button>
                 </div>
 
-                <div id="batch-container" class="space-y-3"></div>
+                <!-- WADAH DAFTAR BATCH (DIPISAH DUA) -->
+                <div id="group-crit" class="space-y-3 pt-2"></div>
+                <div id="group-safe" class="space-y-3 pt-2 hidden-tab"></div>
             </div>
 
+            <!-- INVENTORY HEALTH -->
             <div class="bg-appcard rounded-4xl border border-appappleblue/25 overflow-hidden mt-8">
                 <div class="bg-appappleblue/10 px-6 py-5 border-b border-appappleblue/15"><h4 class="text-sm font-black text-appappleblue uppercase tracking-widest">📦 INVENTORY HEALTH</h4></div>
                 <div class="p-3 overflow-x-auto"><div class="min-w-[340px]">
@@ -76,6 +96,7 @@
                 </div></div>
             </div>
 
+            <!-- DC DIAGNOSE -->
             <div class="space-y-4 pt-4 border-t border-white/5 mt-8">
                 <h4 class="text-xs font-black text-appappleblue uppercase tracking-[0.2em] px-2">DC Diagnose Results</h4>
                 <div id="diagnosa-container" class="grid grid-cols-1 gap-4"></div>
@@ -99,13 +120,31 @@
 
         function getSkel(count, isList=false) { return Array(count).fill(isList ? `<div class="skeleton-box rounded-3xl h-24 w-full mb-3"></div>` : `<div class="skeleton-box rounded-xl h-10 w-full mb-1.5"></div>`).join(''); }
 
+        // FUNGSI TOGGLE ACCORDION DROPDOWN BATCH
+        function toggleBatchGroup(type) {
+            const grp = document.getElementById('group-' + type);
+            const icon = document.getElementById('icon-' + type);
+            
+            if(grp.classList.contains('hidden-tab')) {
+                grp.classList.remove('hidden-tab');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                grp.classList.add('hidden-tab');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
+
         async function loadAnalytics() {
             const icn = document.getElementById('sync-icon'); icn.classList.add('fa-spin');
-            const fCont = document.getElementById('forecast-container'); const dCont = document.getElementById('diagnosa-container'); const bCont = document.getElementById('batch-container');
-            fCont.innerHTML = getSkel(5); dCont.innerHTML = getSkel(3, true); bCont.innerHTML = getSkel(2, true);
+            const fCont = document.getElementById('forecast-container'); const dCont = document.getElementById('diagnosa-container'); 
+            const contCrit = document.getElementById('group-crit'); const contSafe = document.getElementById('group-safe');
+            
+            fCont.innerHTML = getSkel(5); dCont.innerHTML = getSkel(3, true); 
+            contCrit.innerHTML = getSkel(2, true); contSafe.innerHTML = getSkel(2, true);
             
             try {
-                // API Call dengan Headers JSON
                 const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }), 
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }),
@@ -126,14 +165,15 @@
                     });
                 } document.getElementById('stat-sku').innerText = skuCount;
 
-                // 2. Traceability (Semua Umur Batch)
-                bCont.innerHTML = ''; let cCrit=0, cSafe=0;
+                // 2. Traceability dengan Pemisahan Grup Kritis & Aman
+                let cCrit=0, cSafe=0;
+                let htmlCrit = ""; let htmlSafe = "";
+                
                 let logData = [];
                 if(reqLog.status === 'fulfilled') { let r = await reqLog.value.json(); logData = Array.isArray(r) ? r[0].data || r : r.data; }
                 
                 if(reqStock.status === 'fulfilled') {
                     let r = await reqStock.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
-                    let batchRendered = 0;
 
                     (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
                         const row = item.json || item; 
@@ -152,25 +192,22 @@
                             sisaBulan += expDate.getMonth();
                         }
                         
-                        if(sisaBulan <= 3) cCrit++; else cSafe++;
-
-                        // LOGIKA TAMPILAN DINAMIS (KRITIS VS AMAN)
                         let isCritical = sisaBulan <= 3;
-                        let cardBg = isCritical ? "bg-[#2A0505]" : "bg-appcard";
+                        let cardBg = isCritical ? "bg-[#2A0505]" : "bg-[#051A0A]";
                         let borderCol = isCritical ? "border-appred/40" : "border-appgreen/30";
                         let badgeBorder = isCritical ? "border-appred text-appred" : "border-appgreen text-appgreen";
                         let badgeIcon = isCritical ? "⚠️" : "✅";
                         let warningText = sisaBulan <= 0 ? "EXPIRED / MATI" : `Sisa ${sisaBulan} Bulan`;
                         let locChipBg = isCritical ? "bg-appred shadow-[0_0_8px_rgba(255,59,48,0.4)]" : "bg-appgreen shadow-[0_0_8px_rgba(52,199,89,0.3)]";
-                        let dividerCol = isCritical ? "border-appred/20" : "border-white/5";
+                        let dividerCol = isCritical ? "border-appred/20" : "border-appgreen/20";
 
                         let locs = [];
                         logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(batchName) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
                         
-                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${locs.map(dc => `<span class="${locChipBg} text-white text-[8px] px-2 py-1 rounded font-bold">${dc}</span>`).join('')}</div>` : `<span class="text-[8px] text-gray-500 italic mt-2 block">Belum ada sebaran di DC</span>`;
+                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${locs.map(dc => `<span class="${locChipBg} text-white text-[8px] px-2 py-1 rounded font-bold tracking-widest">${dc}</span>`).join('')}</div>` : `<span class="text-[8px] text-gray-500 italic mt-2 block">Belum ada sebaran di DC</span>`;
 
-                        bCont.innerHTML += `
-                        <div class="${cardBg} p-5 rounded-3xl border ${borderCol} animate-fade" style="animation-delay:${batchRendered*30}ms;opacity:0">
+                        let cardHtml = `
+                        <div class="${cardBg} p-5 rounded-3xl border ${borderCol} animate-fade" style="animation-delay:${idx*30}ms;opacity:0">
                             <div class="flex justify-between items-start mb-1">
                                 <div>
                                     <p class="text-[8px] text-gray-400 font-extrabold uppercase tracking-widest mb-0.5">Nama Batch</p>
@@ -186,12 +223,16 @@
                                 ${locH}
                             </div>
                         </div>`;
-                        batchRendered++;
+
+                        if(isCritical) {
+                            htmlCrit += cardHtml; cCrit++;
+                        } else {
+                            htmlSafe += cardHtml; cSafe++;
+                        }
                     });
                     
-                    if (batchRendered === 0) {
-                        bCont.innerHTML = `<div class="p-6 text-center border border-dashed border-appgreen/30 rounded-3xl bg-appcard"><p class="text-gray-500 font-bold text-xs uppercase tracking-widest">Belum Ada Data Batch</p></div>`;
-                    }
+                    contCrit.innerHTML = htmlCrit || `<div class="p-5 text-center border border-dashed border-appred/30 rounded-2xl bg-appred/5"><p class="text-appred font-bold text-[10px] uppercase tracking-widest">✨ Nol Batch Kritis</p></div>`;
+                    contSafe.innerHTML = htmlSafe || `<div class="p-5 text-center border border-dashed border-appgreen/30 rounded-2xl bg-appgreen/5"><p class="text-appgreen font-bold text-[10px] uppercase tracking-widest">Belum Ada Batch Aman</p></div>`;
                 }
                 document.getElementById('stat-grade-crit').innerText = cCrit; document.getElementById('stat-grade-safe').innerText = cSafe;
 
