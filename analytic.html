@@ -35,7 +35,6 @@
         </div>
 
         <div class="p-6 md:p-10 space-y-8 animate-fade">
-            <!-- Summary Stats -->
             <div class="flex gap-4">
                 <div class="flex-1 bg-appcard border border-white/7 p-6 rounded-4xl flex flex-col justify-between">
                     <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Total SKU</p>
@@ -47,11 +46,10 @@
                 </div>
             </div>
 
-            <!-- TRACEABILITY & AGE TRACKING -->
             <div class="space-y-4 pt-2">
                 <div class="bg-appappleorange/10 px-4 py-3 rounded-2xl border border-appappleorange/20 mb-4">
-                    <h4 class="text-xs font-black text-appappleorange uppercase tracking-widest"><i class="fa-solid fa-radar mr-2"></i> TRACEABILITY (SISA UMUR BATCH)</h4>
-                    <p class="text-[9px] text-gray-400 mt-1 font-bold">Menampilkan Batch yang sisa umur kadaluarsanya 3 bulan ke bawah.</p>
+                    <h4 class="text-xs font-black text-appappleorange uppercase tracking-widest"><i class="fa-solid fa-radar mr-2"></i> TRACEABILITY BATCH</h4>
+                    <p class="text-[9px] text-gray-400 mt-1 font-bold">Menampilkan seluruh Batch beserta sisa waktu dan lokasi sebarannya.</p>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-3 px-1 mb-4">
@@ -68,7 +66,6 @@
                 <div id="batch-container" class="space-y-3"></div>
             </div>
 
-            <!-- INVENTORY HEALTH -->
             <div class="bg-appcard rounded-4xl border border-appappleblue/25 overflow-hidden mt-8">
                 <div class="bg-appappleblue/10 px-6 py-5 border-b border-appappleblue/15"><h4 class="text-sm font-black text-appappleblue uppercase tracking-widest">📦 INVENTORY HEALTH</h4></div>
                 <div class="p-3 overflow-x-auto"><div class="min-w-[340px]">
@@ -79,7 +76,6 @@
                 </div></div>
             </div>
 
-            <!-- DC DIAGNOSE -->
             <div class="space-y-4 pt-4 border-t border-white/5 mt-8">
                 <h4 class="text-xs font-black text-appappleblue uppercase tracking-[0.2em] px-2">DC Diagnose Results</h4>
                 <div id="diagnosa-container" class="grid grid-cols-1 gap-4"></div>
@@ -109,7 +105,7 @@
             fCont.innerHTML = getSkel(5); dCont.innerHTML = getSkel(3, true); bCont.innerHTML = getSkel(2, true);
             
             try {
-                // PERBAIKAN: API Call dengan Headers yang benar
+                // API Call dengan Headers JSON
                 const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }), 
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }),
@@ -130,7 +126,7 @@
                     });
                 } document.getElementById('stat-sku').innerText = skuCount;
 
-                // 2. Traceability (Exp Countdown)
+                // 2. Traceability (Semua Umur Batch)
                 bCont.innerHTML = ''; let cCrit=0, cSafe=0;
                 let logData = [];
                 if(reqLog.status === 'fulfilled') { let r = await reqLog.value.json(); logData = Array.isArray(r) ? r[0].data || r : r.data; }
@@ -149,7 +145,7 @@
                         let expDate = expDateStr.includes('/') ? new Date(expDateStr.split('/')[2], expDateStr.split('/')[1]-1, expDateStr.split('/')[0]) : new Date(expDateStr);
                         const now = new Date(); 
                         
-                        let sisaBulan = 99; // Default aman kalau error baca tanggal
+                        let sisaBulan = 99;
                         if(!isNaN(expDate)) {
                             sisaBulan = (expDate.getFullYear() - now.getFullYear()) * 12;
                             sisaBulan -= now.getMonth();
@@ -158,38 +154,43 @@
                         
                         if(sisaBulan <= 3) cCrit++; else cSafe++;
 
-                        // TAMPILKAN HANYA JIKA SISA UMUR <= 3 BULAN
-                        if(sisaBulan <= 3) {
-                            let locs = [];
-                            logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(batchName) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
-                            
-                            let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${locs.map(dc => `<span class="bg-appred text-white text-[8px] px-2 py-1 rounded font-bold shadow-[0_0_8px_rgba(255,59,48,0.4)]">${dc}</span>`).join('')}</div>` : `<span class="text-[8px] text-gray-500 italic mt-2 block">Belum ada sebaran di DC</span>`;
-                            
-                            let warningText = sisaBulan <= 0 ? "EXPIRED / MATI" : `Sisa ${sisaBulan} Bulan`;
+                        // LOGIKA TAMPILAN DINAMIS (KRITIS VS AMAN)
+                        let isCritical = sisaBulan <= 3;
+                        let cardBg = isCritical ? "bg-[#2A0505]" : "bg-appcard";
+                        let borderCol = isCritical ? "border-appred/40" : "border-appgreen/30";
+                        let badgeBorder = isCritical ? "border-appred text-appred" : "border-appgreen text-appgreen";
+                        let badgeIcon = isCritical ? "⚠️" : "✅";
+                        let warningText = sisaBulan <= 0 ? "EXPIRED / MATI" : `Sisa ${sisaBulan} Bulan`;
+                        let locChipBg = isCritical ? "bg-appred shadow-[0_0_8px_rgba(255,59,48,0.4)]" : "bg-appgreen shadow-[0_0_8px_rgba(52,199,89,0.3)]";
+                        let dividerCol = isCritical ? "border-appred/20" : "border-white/5";
 
-                            bCont.innerHTML += `
-                            <div class="bg-[#2A0505] p-5 rounded-3xl border border-appred/40 animate-fade" style="animation-delay:${batchRendered*30}ms;opacity:0">
-                                <div class="flex justify-between items-start mb-1">
-                                    <div>
-                                        <p class="text-[8px] text-gray-400 font-extrabold uppercase tracking-widest mb-0.5">Nama Batch</p>
-                                        <h4 class="font-black text-lg text-white uppercase tracking-wider">${batchName}</h4>
-                                    </div>
-                                    <div class="px-3 py-1.5 rounded-lg border border-appred text-[10px] font-black uppercase tracking-widest text-appred bg-black/50">
-                                        ⚠️ ${warningText}
-                                    </div>
+                        let locs = [];
+                        logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(batchName) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
+                        
+                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${locs.map(dc => `<span class="${locChipBg} text-white text-[8px] px-2 py-1 rounded font-bold">${dc}</span>`).join('')}</div>` : `<span class="text-[8px] text-gray-500 italic mt-2 block">Belum ada sebaran di DC</span>`;
+
+                        bCont.innerHTML += `
+                        <div class="${cardBg} p-5 rounded-3xl border ${borderCol} animate-fade" style="animation-delay:${batchRendered*30}ms;opacity:0">
+                            <div class="flex justify-between items-start mb-1">
+                                <div>
+                                    <p class="text-[8px] text-gray-400 font-extrabold uppercase tracking-widest mb-0.5">Nama Batch</p>
+                                    <h4 class="font-black text-lg text-white uppercase tracking-wider">${batchName}</h4>
                                 </div>
-                                <p class="text-[9px] text-gray-500 font-bold tracking-widest mb-3">Tgl Kadaluarsa: ${expDateStr}</p>
-                                <div class="border-t border-appred/20 pt-3">
-                                    <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">📍 LOKASI SEBARAN SAAT INI:</p>
-                                    ${locH}
+                                <div class="px-3 py-1.5 rounded-lg border ${badgeBorder} text-[10px] font-black uppercase tracking-widest bg-black/50 shadow-sm">
+                                    ${badgeIcon} ${warningText}
                                 </div>
-                            </div>`;
-                            batchRendered++;
-                        }
+                            </div>
+                            <p class="text-[9px] text-gray-500 font-bold tracking-widest mb-3">Tgl Kadaluarsa: ${expDateStr}</p>
+                            <div class="border-t ${dividerCol} pt-3">
+                                <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">📍 LOKASI SEBARAN SAAT INI:</p>
+                                ${locH}
+                            </div>
+                        </div>`;
+                        batchRendered++;
                     });
                     
                     if (batchRendered === 0) {
-                        bCont.innerHTML = `<div class="p-6 text-center border border-dashed border-appgreen/30 rounded-3xl bg-appgreen/5"><p class="text-appgreen font-bold text-xs uppercase tracking-widest">✨ Semua Batch Aman (> 3 Bulan)</p></div>`;
+                        bCont.innerHTML = `<div class="p-6 text-center border border-dashed border-appgreen/30 rounded-3xl bg-appcard"><p class="text-gray-500 font-bold text-xs uppercase tracking-widest">Belum Ada Data Batch</p></div>`;
                     }
                 }
                 document.getElementById('stat-grade-crit').innerText = cCrit; document.getElementById('stat-grade-safe').innerText = cSafe;
