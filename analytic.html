@@ -120,19 +120,13 @@
 
         function getSkel(count, isList=false) { return Array(count).fill(isList ? `<div class="skeleton-box rounded-3xl h-24 w-full mb-3"></div>` : `<div class="skeleton-box rounded-xl h-10 w-full mb-1.5"></div>`).join(''); }
 
-        // FUNGSI TOGGLE ACCORDION DROPDOWN BATCH
         function toggleBatchGroup(type) {
             const grp = document.getElementById('group-' + type);
             const icon = document.getElementById('icon-' + type);
-            
             if(grp.classList.contains('hidden-tab')) {
-                grp.classList.remove('hidden-tab');
-                icon.classList.remove('fa-chevron-down');
-                icon.classList.add('fa-chevron-up');
+                grp.classList.remove('hidden-tab'); icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up');
             } else {
-                grp.classList.add('hidden-tab');
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
+                grp.classList.add('hidden-tab'); icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down');
             }
         }
 
@@ -201,9 +195,21 @@
                         let locChipBg = isCritical ? "bg-appred shadow-[0_0_8px_rgba(255,59,48,0.4)]" : "bg-appgreen shadow-[0_0_8px_rgba(52,199,89,0.3)]";
                         let dividerCol = isCritical ? "border-appred/20" : "border-appgreen/20";
 
+                        // Cek Variasi SKU yang Terdapat dalam Batch Ini (Kuantitas > 0)
+                        let skusInBatch = [];
+                        if(Number(row.NKA || row.nka || 0) > 0) skusInBatch.push("NKA");
+                        if(Number(row.NDLH || row.ndlh || 0) > 0) skusInBatch.push("NDLH");
+                        if(Number(row.NRD || row.nrd || 0) > 0) skusInBatch.push("NRD");
+                        if(Number(row.NARR || row.narr || 0) > 0) skusInBatch.push("NARR");
+                        if(Number(row.NKACH || row.nkach || 0) > 0) skusInBatch.push("NKACH");
+
+                        let skuHtml = skusInBatch.length > 0 
+                            ? `<div class="flex flex-wrap gap-1.5 mt-1.5">${skusInBatch.map(s => `<span class="bg-white/10 text-white text-[8px] px-2 py-1 rounded font-bold tracking-widest border border-white/10">${s}</span>`).join('')}</div>`
+                            : `<span class="text-[8px] text-gray-500 italic mt-1.5 block">Varian tidak tercatat</span>`;
+
+                        // Lokasi Sebaran
                         let locs = [];
                         logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(batchName) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
-                        
                         let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-2">${locs.map(dc => `<span class="${locChipBg} text-white text-[8px] px-2 py-1 rounded font-bold tracking-widest">${dc}</span>`).join('')}</div>` : `<span class="text-[8px] text-gray-500 italic mt-2 block">Belum ada sebaran di DC</span>`;
 
                         let cardHtml = `
@@ -217,7 +223,13 @@
                                     ${badgeIcon} ${warningText}
                                 </div>
                             </div>
-                            <p class="text-[9px] text-gray-500 font-bold tracking-widest mb-3">Tgl Kadaluarsa: ${expDateStr}</p>
+                            <p class="text-[9px] text-gray-500 font-bold tracking-widest mb-4">Tgl Kadaluarsa: ${expDateStr}</p>
+                            
+                            <div class="mb-4">
+                                <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">📦 Varian SKU:</p>
+                                ${skuHtml}
+                            </div>
+
                             <div class="border-t ${dividerCol} pt-3">
                                 <p class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">📍 LOKASI SEBARAN SAAT INI:</p>
                                 ${locH}
