@@ -209,41 +209,77 @@
             } catch(e) { console.error("Sync gagal", e); }
         }
 
-        function renderAnalyticReport() {
+function renderAnalyticReport() {
             const mon = document.getElementById('analytic-month').value; if(!mon) return;
             const [y, mStr] = mon.split('-'); const mInt = parseInt(mStr, 10);
             document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y} | Global Control`;
 
+            // Helper Function untuk mengubah String (koma/persen) menjadi Angka murni agar Chart tidak NaN
+            const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+
+            // 1. Kalkulasi Fulfill & Volume
             let totPO=0, totSales=0;
             dbLogData.forEach(i => {
                 if(!i.ID || String(i["PO NKA"]).includes("BATAL")) return;
                 if(!(i["Tanggal PO"]||"").includes(`${mStr}/${y}`) && !(i["Tanggal PO"]||"").includes(`/${mInt}/${y}`)) return;
-                totPO += Number(i["TOTAL PO ctn"]||0);
-                totSales += Number(i["Qty Terpenuhi (Kirim)"]||0);
+                
+                totPO += safeNum(i["TOTAL PO ctn"]);
+                totSales += safeNum(i["Qty Terpenuhi (Kirim)"]);
             });
             
             document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
 
+            // Filter dbForecast untuk mengabaikan baris Header dari Google Sheets (misal kata "SKU")
+            const validForecast = dbForecastData.filter(i => {
+                const row = i.json || i;
+                return row.col_2 && String(row.col_2).toUpperCase() !== 'SKU';
+            });
+
+            // 2. Kalkulasi Inventory Health
             let crit=0, safe=0;
-            dbForecastData.forEach(i => { const row=i.json||i; if(String(row.col_6||"").includes("CRITICAL")) crit++; else safe++; });
+            validForecast.forEach(i => { 
+                const row = i.json || i; 
+                if(String(row.col_6||"").toUpperCase().includes("CRITICAL")) crit++; 
+                else safe++; 
+            });
             document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
             document.getElementById('rep-inv-health').innerHTML = `<span style="color:#FF3B30; font-weight:bold;">${crit} SKU Kritis</span> | <span style="color:#34C759; font-weight:bold;">${safe} SKU Aman</span>`;
 
-            // Draw Charts
-            if(barChart) barChart.destroy(); if(pieChart) pieChart.destroy();
-            const top5 = dbForecastData.slice(0, 5);
+            // 3. Render Ulang Chart Bar & Pie
+            if(barChart) barChart.destroy(); 
+            if(pieChart) pieChart.destroy();
+            
+            // Ambil Top 5 SKU valid
+            const top5 = validForecast.slice(0, 5);
+            
             barChart = new Chart(document.getElementById('chartBar'), {
                 type: 'bar',
-                data: { labels: top5.map(i=>(i.json||i).col_2), datasets: [{ label: 'Demand', data: top5.map(i=>Number((i.json||i).col_3)), backgroundColor: '#ADD8E6' },{ label: 'PO Target', data: top5.map(i=>Number((i.json||i).col_4)), backgroundColor: '#FF3B30' }] },
-                options: { animation:false, responsive:true }
+                data: { 
+                    labels: top5.map(i => (i.json || i).col_2 || 'N/A'), 
+                    datasets: [
+                        { label: 'Demand', data: top5.map(i => safeNum((i.json||i).col_3)), backgroundColor: '#ADD8E6' },
+                        { label: 'PO Target', data: top5.map(i => safeNum((i.json||i).col_4)), backgroundColor: '#FF3B30' }
+                    ] 
+                },
+                options: { animation: false, responsive: true }
             });
 
-            let f=0, m=0, a=0; dbDiagData.forEach(i=>{ const row=i.json||i; f+=Number(row.failPct||row.col_4||0); m+=Number(row.moqPct||row.col_6||0); a+=Number(row.abovePct||row.col_8||0); });
+            let f=0, m=0, a=0; 
+            dbDiagData.forEach(i => { 
+                const row = i.json || i; 
+                f += safeNum(row.failPct || row.col_4); 
+                m += safeNum(row.moqPct || row.col_6); 
+                a += safeNum(row.abovePct || row.col_8); 
+            });
+            
             pieChart = new Chart(document.getElementById('chartPie'), {
                 type: 'pie',
-                data: { labels: ['WH Fail', 'Under MOQ', 'Safe'], datasets: [{ data: [f, m, a], backgroundColor: ['#FF3B30', '#FF9500', '#34C759'] }] },
-                options: { animation:false, responsive:true }
+                data: { 
+                    labels: ['WH Fail', 'Under MOQ', 'Safe'], 
+                    datasets: [{ data: [f, m, a], backgroundColor: ['#FF3B30', '#FF9500', '#34C759'] }] 
+                },
+                options: { animation: false, responsive: true }
             });
         }
 
