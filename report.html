@@ -54,6 +54,7 @@
 
     <div class="w-full max-w-5xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto border-x border-white/5 pb-20">
         
+        <!-- Header Nav -->
         <div class="px-6 py-5 bg-[#000000]/92 backdrop-blur-xl z-20 flex justify-between items-center border-b border-white/5 sticky top-0">
             <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white text-xs flex items-center gap-2 btn-tactile">
                 <i class="fa-solid fa-chevron-left"></i> LOBBY
@@ -64,18 +65,21 @@
 
         <div class="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-fade">
             
+            <!-- PANEL KONTROL (KIRI) -->
             <div class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/5">
                 <div class="flex bg-black p-1 rounded-xl border border-white/10 text-center">
                     <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase bg-appappleorange text-black">Analytic</button>
                     <button onclick="switchReportView('log')" id="btn-rep-log" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase text-gray-500">Log PO</button>
                 </div>
 
+                <!-- Kontrol Dashboard Analytic -->
                 <div id="ctrl-analytic" class="space-y-4">
                     <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Pilih Bulan Histori</label>
                     <input type="month" id="analytic-month" onchange="fetchAndRenderReport()">
                     <button onclick="downloadPDF('print-analytic', 'FFI_Analytic_Report')" class="w-full bg-appappleorange text-black font-extrabold py-4 rounded-xl btn-tactile text-xs"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF ANALYTIC</button>
                 </div>
 
+                <!-- Kontrol Log PO -->
                 <div id="ctrl-log" class="hidden-tab space-y-4">
                     <div class="grid grid-cols-1 gap-3">
                         <div>
@@ -91,9 +95,11 @@
                 </div>
             </div>
 
+            <!-- PANEL PREVIEW KERTAS A4 (KANAN) -->
             <div class="lg:col-span-2 space-y-6">
                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest text-center">⬇️ LIVE PRINT PREVIEW (A4 RESMI) ⬇️</p>
                 
+                <!-- PREVIEW ANALYTIC -->
                 <div class="a4-wrapper" id="view-print-analytic">
                     <div id="print-analytic" class="a4-paper shadow-2xl">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px;">
@@ -119,13 +125,22 @@
                             <div style="font-size:11px; color:#6B7280; text-transform:uppercase; font-weight:800;">Global Inventory Health Status</div>
                             <div id="rep-inv-health" style="font-size:16px; font-weight:900; margin-top:5px; color:black;">0 Critical | 0 Safe</div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; gap: 15px; align-items: center; margin-top: 35px;">
-                            <div style="width:48%;"><h4 style="font-size:12px; text-align:center; margin-bottom:10px; font-weight:800; font-family:Arial; color:#374151;">SKU Demand vs Target</h4><canvas id="chartBar"></canvas></div>
-                            <div style="width:48%;"><h4 style="font-size:12px; text-align:center; margin-bottom:10px; font-weight:800; font-family:Arial; color:#374151;">DC Issue Distribution</h4><canvas id="chartPie"></canvas></div>
+                        <div style="display: flex; justify-content: space-between; gap: 15px; align-items: flex-start; margin-top: 35px;">
+                            <div style="width:48%; text-align: center;">
+                                <h4 style="font-size:12px; margin-bottom:10px; font-weight:800; font-family:Arial; color:#374151;">SKU Demand vs Target</h4>
+                                <!-- PERBAIKAN: Set Lebar dan Tinggi Canvas Paten -->
+                                <canvas id="chartBar" width="340" height="220" style="margin: 0 auto;"></canvas>
+                            </div>
+                            <div style="width:48%; text-align: center;">
+                                <h4 style="font-size:12px; margin-bottom:10px; font-weight:800; font-family:Arial; color:#374151;">DC Issue Distribution</h4>
+                                <!-- PERBAIKAN: Set Lebar dan Tinggi Canvas Paten -->
+                                <canvas id="chartPie" width="340" height="220" style="margin: 0 auto;"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- PREVIEW LOG PO -->
                 <div class="a4-wrapper hidden-tab" id="view-print-log">
                     <div id="print-log" class="a4-paper shadow-2xl">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px; font-family: Arial;">
@@ -252,7 +267,8 @@
                         { label: 'PO Target', data: top5.map(i => safeNum((i.json||i).col_4)), backgroundColor: '#FF3B30' }
                     ] 
                 },
-                options: { animation: false, responsive: true }
+                // PERBAIKAN: Matikan responsive agar kanvas tidak ditarik ulur oleh Chart.js
+                options: { animation: false, responsive: false }
             });
 
             let f=0, m=0, a=0; 
@@ -269,7 +285,8 @@
                     labels: ['WH Fail', 'Under MOQ', 'Safe'], 
                     datasets: [{ data: [f, m, a], backgroundColor: ['#FF3B30', '#FF9500', '#34C759'] }] 
                 },
-                options: { animation: false, responsive: true }
+                // PERBAIKAN: Matikan responsive agar kanvas tidak ditarik ulur oleh Chart.js
+                options: { animation: false, responsive: false }
             });
         }
 
@@ -279,7 +296,7 @@
             document.getElementById('rep-log-period').innerHTML = `Periode: ${mStr} / ${y} &nbsp;|&nbsp; Target: <span style="color:#1D4ED8;">${dcVal}</span>`;
 
             let rows = dbLogData.filter(i => {
-                if(!i.ID || String(i["PO NKA"]).includes("BATAL") || String(i.ID).toUpperCase() === 'ID') return false; // Abaikan Header
+                if(!i.ID || String(i["PO NKA"]).includes("BATAL") || String(i.ID).toUpperCase() === 'ID') return false; 
                 const matchM = (i["Tanggal PO"]||"").includes(`${mStr}/${y}`) || (i["Tanggal PO"]||"").includes(`/${mInt}/${y}`);
                 const matchD = dcVal === "ALL" || String(i.DC).toUpperCase() === String(dcVal).toUpperCase();
                 return matchM && matchD;
