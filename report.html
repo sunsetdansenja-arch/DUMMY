@@ -28,7 +28,8 @@
     </script>
     <style>
         body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         
         input, select { background-color: #2C2C2E; border: 1.5px solid transparent; transition: all 0.25s; color: white; width: 100%; border-radius: 1.25rem; padding: 1rem 1.2rem; outline: none; font-weight: 600; font-size: 0.9rem; }
         input:focus, select:focus { border-color: #FF3B30; background-color: #1C1C1E; }
@@ -36,9 +37,29 @@
         .btn-tactile { transition: transform 0.1s; cursor: pointer; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
         .btn-tactile:active { transform: scale(0.97); }
         
-        /* PERBAIKAN A4 PDF: Menggunakan ukuran pasti milimeter agar html2canvas tidak error */
-        .a4-wrapper { overflow-x: auto; background-color: #1C1C1E; border-radius: 1.5rem; padding: 15px; border: 1px solid rgba(255,255,255,0.08); }
-        .a4-paper { width: 210mm; min-height: 297mm; background: white; color: black; padding: 15mm; box-sizing: border-box; margin: 0 auto; position: relative; }
+        /* FIX PREVIEW: Gunakan flex dan penguncian dimensi untuk menahan squish ratio browser */
+        .a4-wrapper { 
+            overflow-x: auto; 
+            background-color: #1C1C1E; 
+            border-radius: 1.5rem; 
+            padding: 20px; 
+            border: 1px solid rgba(255,255,255,0.08); 
+            display: flex; 
+            justify-content: flex-start; /* Jangan gunakan center agar tidak terpotong saat layar kecil */
+        }
+        .a4-paper { 
+            width: 210mm; 
+            min-width: 210mm; /* Mencegah CSS memeras kertas saat preview desktop */
+            min-height: 297mm; 
+            background: white; 
+            color: black; 
+            padding: 15mm; 
+            box-sizing: border-box; 
+            position: relative; 
+            flex-shrink: 0; /* Menolak untuk dikecilkan oleh flexbox parent */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            margin: 0 auto;
+        }
         
         #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .toast-show { transform: translateY(0) !important; }
@@ -65,7 +86,7 @@
 
         <div class="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-fade">
             
-            <div class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/5">
+            <div class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/5 lg:sticky lg:top-[90px]">
                 <div class="flex bg-black p-1 rounded-xl border border-white/10 text-center">
                     <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase bg-appappleorange text-black">Analytic</button>
                     <button onclick="switchReportView('log')" id="btn-rep-log" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase text-gray-500">Log PO</button>
@@ -74,7 +95,7 @@
                 <div id="ctrl-analytic" class="space-y-4">
                     <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Pilih Bulan Histori</label>
                     <input type="month" id="analytic-month" onchange="fetchAndRenderReport()">
-                    <button onclick="downloadPDF('print-analytic', 'FFI_Analytic_Report')" class="w-full bg-appappleorange text-black font-extrabold py-4 rounded-xl btn-tactile text-xs"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF ANALYTIC</button>
+                    <button onclick="downloadPDF('print-analytic', 'FFI_Analytic_Report')" class="w-full bg-appappleorange text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF ANALYTIC</button>
                 </div>
 
                 <div id="ctrl-log" class="hidden-tab space-y-4">
@@ -88,11 +109,11 @@
                             <select id="report-dc" onchange="fetchAndRenderReport()"><option value="ALL">ALL DC GUDANG</option></select>
                         </div>
                     </div>
-                    <button onclick="downloadPDF('print-log', 'FFI_Log_Report')" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-xl btn-tactile text-xs"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF LOG PO</button>
+                    <button onclick="downloadPDF('print-log', 'FFI_Log_Report')" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF LOG PO</button>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 space-y-6">
+            <div class="lg:col-span-2 space-y-6 overflow-hidden">
                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest text-center">⬇️ LIVE PRINT PREVIEW (A4 RESMI) ⬇️</p>
                 
                 <div class="a4-wrapper" id="view-print-analytic">
@@ -123,15 +144,15 @@
                             <div id="rep-inv-health" style="font-size:16px; font-weight:900; margin-top:5px; color:black;">0 Critical | 0 Safe</div>
                         </div>
 
-                        <table style="width: 100%; table-layout: fixed; margin-top: 35px; font-family: Arial;">
+                        <table style="width: 100%; table-layout: fixed; margin-top: 35px; font-family: Arial; border: none;">
                             <tr>
-                                <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 10px;">
+                                <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 10px; border: none;">
                                     <h4 style="font-size:12px; margin-bottom:15px; font-weight:800; color:#374151;">SKU Demand vs Target</h4>
                                     <div style="width: 280px; height: 200px; margin: 0 auto;">
                                         <canvas id="chartBar" width="280" height="200"></canvas>
                                     </div>
                                 </td>
-                                <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 10px;">
+                                <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 10px; border: none;">
                                     <h4 style="font-size:12px; margin-bottom:15px; font-weight:800; color:#374151;">DC Issue Distribution</h4>
                                     <div style="width: 280px; height: 200px; margin: 0 auto;">
                                         <canvas id="chartPie" width="280" height="200"></canvas>
@@ -158,7 +179,7 @@
 
     <script>
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
-        let dbLogData = []; let dbForecastData = []; let dbDiagData = [];
+        let dbLogData = []; let dbForecastData = [];
         let barChart = null; let pieChart = null;
 
         const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
@@ -204,15 +225,15 @@
         async function fetchAndRenderReport() {
             showToast("Sinkronisasi Data...");
             try {
-                const [reqLog, reqBuffer, reqDiag] = await Promise.all([
+                // Catatan: Saya menghapus panggilan 'load_diagnose' karena kita akan menggunakan raw dbLogData
+                // untuk menghitung Pie Chart agar akurat sesuai bulan.
+                const [reqLog, reqBuffer] = await Promise.all([
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json()),
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }).then(r => r.json())
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json())
                 ]);
                 
                 dbLogData = Array.isArray(reqLog) ? reqLog[0].data || reqLog : reqLog.data || [];
                 dbForecastData = Array.isArray(reqBuffer) ? reqBuffer[0].data || reqBuffer : reqBuffer.data || [];
-                dbDiagData = Array.isArray(reqDiag) ? reqDiag[0].data || reqDiag : reqDiag.data || [];
                 
                 renderAnalyticReport();
                 renderLogReport();
@@ -229,26 +250,42 @@
             document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y} | Global Control`;
 
             let totPO=0, totSales=0;
+            
+            // Variabel penampung untuk Pie Chart (Dihitung langsung dari Log Data)
+            let fCount=0, mCount=0, aCount=0;
+
             dbLogData.forEach(i => {
                 if(!i.ID || String(i["PO NKA"]).includes("BATAL") || String(i.ID).toUpperCase() === 'ID') return;
-                if(!(i["Tanggal PO"]||"").includes(`${mStr}/${y}`) && !(i["Tanggal PO"]||"").includes(`/${mInt}/${y}`)) return;
                 
+                // FILTER BULAN UNTUK SEMUA METRIK LOG
+                const tgl = String(i["Tanggal PO"]||"");
+                if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
+                
+                // Hitung Global Volume
                 totPO += safeNum(i["TOTAL PO ctn"]);
                 totSales += safeNum(i["Qty Terpenuhi (Kirim)"]);
+
+                // Hitung Pie Chart Status SSC 
+                const status = String(i["Status Supply Chain (SSC)"] || "").toUpperCase();
+                if(status.includes("FAIL") || status.includes("WAREHOUSE")) {
+                    fCount++;
+                } else if(status.includes("UNDER") || status.includes("MOQ")) {
+                    mCount++;
+                } else {
+                    aCount++; // Terpenuhi / Aman / Lainnya
+                }
             });
             
             document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
 
-            // FILTER: Hanya ambil data yang memiliki header valid DAN sesuai tanggal bulan ini
             const validForecast = dbForecastData.filter(i => {
                 const row = i.json || i;
                 if (!row.col_2 || String(row.col_2).toUpperCase() === 'SKU') return false;
                 
-                // Pengecekan Tanggal (mendukung multi penamaan kolom)
-                const tgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
-                if (tgl && !tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return false;
-                
+                // Jika sheet buffer memiliki tanggal, ini akan berfungsi. Jika tidak, data tampil utuh.
+                const fTgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
+                if (fTgl && !fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`)) return false;
                 return true;
             });
 
@@ -275,25 +312,13 @@
                 },
                 options: { animation: false, responsive: false, maintainAspectRatio: false }
             });
-
-            let f=0, m=0, a=0; 
-            dbDiagData.forEach(i => { 
-                const row = i.json || i; 
-                
-                // FILTER BULAN UNTUK PIE CHART
-                const tgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
-                if (tgl && !tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
-
-                f += safeNum(row.failPct || row.col_4); 
-                m += safeNum(row.moqPct || row.col_6); 
-                a += safeNum(row.abovePct || row.col_8); 
-            });
             
+            // PIE CHART yang sekarang 100% akurat sesuai bulan filter
             pieChart = new Chart(document.getElementById('chartPie'), {
                 type: 'pie',
                 data: { 
                     labels: ['WH Fail', 'Under MOQ', 'Safe'], 
-                    datasets: [{ data: [f, m, a], backgroundColor: ['#FF3B30', '#FF9500', '#34C759'] }] 
+                    datasets: [{ data: [fCount, mCount, aCount], backgroundColor: ['#FF3B30', '#FF9500', '#34C759'] }] 
                 },
                 options: { animation: false, responsive: false, maintainAspectRatio: false }
             });
@@ -327,15 +352,11 @@
             document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#9CA3AF; padding:40px; font-style:italic;">Tidak ada data pembukuan di filter ini.</p>`;
         }
 
-        // PERBAIKAN ENGINE PDF
         function downloadPDF(id, name) {
             showToast("Mempersiapkan Dokumen...");
-            
-            // Wajib scroll ke atas sebelum print agar area yang dirender html2canvas tidak hitam/kosong
             window.scrollTo(0, 0); 
             
             const element = document.getElementById(id);
-            
             const opt = { 
                 margin:       0, 
                 filename:     `${name}.pdf`, 
