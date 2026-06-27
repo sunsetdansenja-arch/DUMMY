@@ -37,29 +37,8 @@
         .btn-tactile { transition: transform 0.1s; cursor: pointer; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
         .btn-tactile:active { transform: scale(0.97); }
         
-        /* FIX PREVIEW: Gunakan flex dan penguncian dimensi untuk menahan squish ratio browser */
-        .a4-wrapper { 
-            overflow-x: auto; 
-            background-color: #1C1C1E; 
-            border-radius: 1.5rem; 
-            padding: 20px; 
-            border: 1px solid rgba(255,255,255,0.08); 
-            display: flex; 
-            justify-content: flex-start; /* Jangan gunakan center agar tidak terpotong saat layar kecil */
-        }
-        .a4-paper { 
-            width: 210mm; 
-            min-width: 210mm; /* Mencegah CSS memeras kertas saat preview desktop */
-            min-height: 297mm; 
-            background: white; 
-            color: black; 
-            padding: 15mm; 
-            box-sizing: border-box; 
-            position: relative; 
-            flex-shrink: 0; /* Menolak untuk dikecilkan oleh flexbox parent */
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            margin: 0 auto;
-        }
+        .a4-wrapper { overflow-x: auto; background-color: #1C1C1E; border-radius: 1.5rem; padding: 20px; border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: flex-start; }
+        .a4-paper { width: 210mm; min-width: 210mm; min-height: 297mm; background: white; color: black; padding: 15mm; box-sizing: border-box; position: relative; flex-shrink: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: 0 auto; }
         
         #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .toast-show { transform: translateY(0) !important; }
@@ -225,8 +204,6 @@
         async function fetchAndRenderReport() {
             showToast("Sinkronisasi Data...");
             try {
-                // Catatan: Saya menghapus panggilan 'load_diagnose' karena kita akan menggunakan raw dbLogData
-                // untuk menghitung Pie Chart agar akurat sesuai bulan.
                 const [reqLog, reqBuffer] = await Promise.all([
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json())
@@ -250,43 +227,45 @@
             document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y} | Global Control`;
 
             let totPO=0, totSales=0;
-            
-            // Variabel penampung untuk Pie Chart (Dihitung langsung dari Log Data)
             let fCount=0, mCount=0, aCount=0;
 
             dbLogData.forEach(i => {
                 if(!i.ID || String(i["PO NKA"]).includes("BATAL") || String(i.ID).toUpperCase() === 'ID') return;
                 
-                // FILTER BULAN UNTUK SEMUA METRIK LOG
                 const tgl = String(i["Tanggal PO"]||"");
                 if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
                 
-                // Hitung Global Volume
                 totPO += safeNum(i["TOTAL PO ctn"]);
                 totSales += safeNum(i["Qty Terpenuhi (Kirim)"]);
 
-                // Hitung Pie Chart Status SSC 
+                // BUG FIX 1: Perbaikan Logika Deteksi Status MOQ
                 const status = String(i["Status Supply Chain (SSC)"] || "").toUpperCase();
                 if(status.includes("FAIL") || status.includes("WAREHOUSE")) {
                     fCount++;
-                } else if(status.includes("UNDER") || status.includes("MOQ")) {
+                } else if(status.includes("UNDER")) { // Menghapus rules "MOQ" agar "Above MOQ" tidak ikut tersedot
                     mCount++;
                 } else {
-                    aCount++; // Terpenuhi / Aman / Lainnya
+                    aCount++; // Keranjang untuk SAFE / ABOVE MOQ / DLL
                 }
             });
             
             document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
 
+            // BUG FIX 2: Brute-Force Date Matching untuk Grafik Batang
             const validForecast = dbForecastData.filter(i => {
                 const row = i.json || i;
                 if (!row.col_2 || String(row.col_2).toUpperCase() === 'SKU') return false;
                 
-                // Jika sheet buffer memiliki tanggal, ini akan berfungsi. Jika tidak, data tampil utuh.
-                const fTgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
-                if (fTgl && !fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`)) return false;
-                return true;
+                // Pindai seluruh data pada baris tersebut ke dalam bentuk String
+                const rowStr = JSON.stringify(row);
+                
+                // Cari apakah ada bulan/tahun yang cocok di mana saja dalam baris tersebut
+                const isMatch = rowStr.includes(`${mStr}/${y}`) || 
+                                rowStr.includes(`/${mInt}/${y}`) || 
+                                rowStr.includes(`${y}-${mStr}`);
+                
+                return isMatch;
             });
 
             let crit=0, safe=0;
@@ -295,6 +274,7 @@
                 if(String(row.col_6||"").toUpperCase().includes("CRITICAL")) crit++; 
                 else safe++; 
             });
+            
             document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
             document.getElementById('rep-inv-health').innerHTML = `<span style="color:#FF3B30; font-weight:bold;">${crit} SKU Kritis</span> | <span style="color:#34C759; font-weight:bold;">${safe} SKU Aman</span>`;
 
@@ -313,11 +293,10 @@
                 options: { animation: false, responsive: false, maintainAspectRatio: false }
             });
             
-            // PIE CHART yang sekarang 100% akurat sesuai bulan filter
             pieChart = new Chart(document.getElementById('chartPie'), {
                 type: 'pie',
                 data: { 
-                    labels: ['WH Fail', 'Under MOQ', 'Safe'], 
+                    labels: ['WH Fail', 'Under MOQ', 'Above/Safe'], 
                     datasets: [{ data: [fCount, mCount, aCount], backgroundColor: ['#FF3B30', '#FF9500', '#34C759'] }] 
                 },
                 options: { animation: false, responsive: false, maintainAspectRatio: false }
@@ -361,12 +340,7 @@
                 margin:       0, 
                 filename:     `${name}.pdf`, 
                 image:        { type: 'jpeg', quality: 1 }, 
-                html2canvas:  { 
-                    scale: 2, 
-                    useCORS: true, 
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                }, 
+                html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' }, 
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' } 
             };
             
