@@ -9,8 +9,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Pustaka Chart.js dan Plugin Datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <!-- Pustaka html2pdf -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script>
@@ -86,6 +88,7 @@
 
         <div class="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-fade">
             
+            <!-- PANEL KONTROL -->
             <div class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/5 lg:sticky lg:top-[90px]">
                 <div class="flex bg-black p-1 rounded-xl border border-white/10 text-center">
                     <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase bg-appappleorange text-black">Analytic</button>
@@ -113,9 +116,11 @@
                 </div>
             </div>
 
+            <!-- PANEL PREVIEW A4 -->
             <div class="lg:col-span-2 space-y-6 overflow-hidden">
                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest text-center">⬇️ LIVE PRINT PREVIEW (A4 RESMI) ⬇️</p>
                 
+                <!-- PREVIEW ANALYTIC -->
                 <div class="a4-wrapper" id="view-print-analytic">
                     <div id="print-analytic" class="a4-paper">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px;">
@@ -163,6 +168,7 @@
                     </div>
                 </div>
 
+                <!-- PREVIEW LOG PO -->
                 <div class="a4-wrapper hidden-tab" id="view-print-log">
                     <div id="print-log" class="a4-paper">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px; font-family: Arial;">
@@ -182,7 +188,7 @@
         Chart.register(ChartDataLabels);
 
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
-        let dbLogData = []; let dbForecastData = [];
+        let dbLogData = []; let dbForecastData = []; let dbDiagData = [];
         let barChart = null; let pieChart = null;
 
         const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
@@ -228,13 +234,16 @@
         async function fetchAndRenderReport() {
             showToast("Sinkronisasi Data...");
             try {
-                const [reqLog, reqBuffer] = await Promise.all([
+                // KOREKSI: Mengembalikan load_diagnose untuk sumber data murni Pie Chart
+                const [reqLog, reqBuffer, reqDiag] = await Promise.all([
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json())
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json()),
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }).then(r => r.json())
                 ]);
                 
                 dbLogData = Array.isArray(reqLog) ? reqLog[0].data || reqLog : reqLog.data || [];
                 dbForecastData = Array.isArray(reqBuffer) ? reqBuffer[0].data || reqBuffer : reqBuffer.data || [];
+                dbDiagData = Array.isArray(reqDiag) ? reqDiag[0].data || reqDiag : reqDiag.data || [];
                 
                 renderAnalyticReport();
                 renderLogReport();
@@ -252,10 +261,7 @@
 
             let totPO=0, totSales=0;
             
-            // Variabel penampung untuk Pie Chart
-            let fCount=0, mCount=0, aCount=0;
-            
-            // Variabel penampung untuk Bar Chart SKU Dinamis per bulan
+            // Variabel Bar Chart
             let skuNKA_PO=0, skuNDLH_PO=0, skuNRD_PO=0, skuNARR_PO=0, skuNKACH_PO=0;
             let skuNKA_Sls=0, skuNDLH_Sls=0, skuNRD_Sls=0, skuNARR_Sls=0, skuNKACH_Sls=0;
 
@@ -265,11 +271,11 @@
                 const tgl = String(i["Tanggal PO"]||"");
                 if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
                 
-                // Hitung Global Volume
+                // Perhitungan Global
                 totPO += safeNum(i["TOTAL PO ctn"]);
                 totSales += safeNum(i["Qty Terpenuhi (Kirim)"]);
 
-                // Hitung Bar Chart Demand vs Target untuk 5 SKU 
+                // Perhitungan Bar Chart 
                 skuNKA_PO += safeNum(i["PO NKA"]);
                 skuNDLH_PO += safeNum(i["PO NDLH"]);
                 skuNRD_PO += safeNum(i["PO NRD"]);
@@ -281,16 +287,27 @@
                 skuNRD_Sls += safeNum(i["NRD"]);
                 skuNARR_Sls += safeNum(i["NARR"]);
                 skuNKACH_Sls += safeNum(i["NKACH"]);
-
-                // Hitung Pie Chart Status SSC 
-                const status = String(i["Status Supply Chain (SSC)"] || "").toUpperCase();
-                if(status.includes("FAIL") || status.includes("WAREHOUSE")) fCount++;
-                else if(status.includes("UNDER") || status.includes("MOQ")) mCount++;
-                else aCount++; 
             });
             
             document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
+
+            // KOREKSI PIE CHART: Hitung dari dbDiagData secara akurat dan difilter per bulan
+            let fCount=0, mCount=0, aCount=0;
+            dbDiagData.forEach(i => {
+                const row = i.json || i;
+                
+                // Mengakomodasi beragam kemungkinan nama kolom tanggal di Google Sheet diagnose
+                const tgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || row.Bulan || "");
+                
+                // Filter logika bulan (melewati row jika bulan tidak cocok dengan pilihan user)
+                if (tgl && !tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`) && !tgl.includes(`${y}-${mStr}`)) return;
+                
+                // Akumulasi data
+                fCount += safeNum(row.failPct || row.col_4);
+                mCount += safeNum(row.moqPct || row.col_6);
+                aCount += safeNum(row.abovePct || row.col_8);
+            });
 
             const validForecast = dbForecastData.filter(i => {
                 const row = i.json || i;
@@ -311,7 +328,6 @@
 
             if(barChart) barChart.destroy(); if(pieChart) pieChart.destroy();
             
-            // BAR CHART yang sekarang menggunakan data riil dbLogData (SKU dinamis mengikuti filter bulan)
             barChart = new Chart(document.getElementById('chartBar'), {
                 type: 'bar',
                 data: { 
@@ -323,14 +339,10 @@
                 },
                 options: { 
                     animation: false, responsive: false, maintainAspectRatio: false,
-                    plugins: {
-                        // Matikan Datalabels pada Grafik Batang agar tidak sumpek
-                        datalabels: { display: false } 
-                    }
+                    plugins: { datalabels: { display: false } }
                 }
             });
             
-            // PIE CHART dengan pengaturan Plugin Datalabels
             pieChart = new Chart(document.getElementById('chartPie'), {
                 type: 'pie',
                 data: { 
@@ -348,9 +360,10 @@
                             font: { weight: 'bold', size: 10, family: 'Arial' },
                             textAlign: 'center',
                             formatter: (value, ctx) => {
-                                if(value === 0) return null; // Sembunyikan jika nilainya 0
+                                if(value === 0) return null; 
                                 let sum = 0;
                                 ctx.chart.data.datasets[0].data.forEach(data => sum += data);
+                                // Label menampilkan "Angka Riil \n (Persentase)"
                                 let percentage = (value * 100 / sum).toFixed(1) + "%";
                                 return `${value}\n(${percentage})`;
                             }
