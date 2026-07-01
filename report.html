@@ -9,10 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Pustaka Chart.js dan Plugin Datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-    <!-- Pustaka html2pdf -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <script>
@@ -47,7 +45,7 @@
             padding: 20px; 
             border: 1px solid rgba(255,255,255,0.08); 
             display: flex; 
-            justify-content: flex-start; 
+            justify-content: center; /* Diubah agar kertas berada di tengah */
         }
         .a4-paper { 
             width: 210mm; 
@@ -88,7 +86,6 @@
 
         <div class="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-fade">
             
-            <!-- PANEL KONTROL -->
             <div class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/5 lg:sticky lg:top-[90px]">
                 <div class="flex bg-black p-1 rounded-xl border border-white/10 text-center">
                     <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase bg-appappleorange text-black">Analytic</button>
@@ -98,7 +95,7 @@
                 <div id="ctrl-analytic" class="space-y-4">
                     <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Pilih Bulan Histori</label>
                     <input type="month" id="analytic-month" onchange="fetchAndRenderReport()">
-                    <button onclick="downloadPDF('print-analytic', 'FFI_Analytic_Report')" class="w-full bg-appappleorange text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF ANALYTIC</button>
+                    <button onclick="downloadPDF('analytic')" class="w-full bg-appappleorange text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF ANALYTIC</button>
                 </div>
 
                 <div id="ctrl-log" class="hidden-tab space-y-4">
@@ -112,15 +109,13 @@
                             <select id="report-dc" onchange="fetchAndRenderReport()"><option value="ALL">ALL DC GUDANG</option></select>
                         </div>
                     </div>
-                    <button onclick="downloadPDF('print-log', 'FFI_Log_Report')" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF LOG PO</button>
+                    <button onclick="downloadPDF('log')" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF LOG PO</button>
                 </div>
             </div>
 
-            <!-- PANEL PREVIEW A4 -->
             <div class="lg:col-span-2 space-y-6 overflow-hidden">
                 <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest text-center">⬇️ LIVE PRINT PREVIEW (A4 RESMI) ⬇️</p>
                 
-                <!-- PREVIEW ANALYTIC -->
                 <div class="a4-wrapper" id="view-print-analytic">
                     <div id="print-analytic" class="a4-paper">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px;">
@@ -149,7 +144,7 @@
                             <div id="rep-inv-health" style="font-size:16px; font-weight:900; margin-top:5px; color:black;">0 Critical | 0 Safe</div>
                         </div>
 
-                        <table style="width: 100%; table-layout: fixed; margin-top: 35px; font-family: Arial; border: none;">
+                        <table style="width: 100%; table-layout: fixed; margin-top: 35px; font-family: Arial; border: none; page-break-inside: avoid;">
                             <tr>
                                 <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 10px; border: none;">
                                     <h4 style="font-size:12px; margin-bottom:15px; font-weight:800; color:#374151;">SKU Demand vs Target</h4>
@@ -168,7 +163,6 @@
                     </div>
                 </div>
 
-                <!-- PREVIEW LOG PO -->
                 <div class="a4-wrapper hidden-tab" id="view-print-log">
                     <div id="print-log" class="a4-paper">
                         <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #E5E7EB; padding-bottom: 15px; font-family: Arial;">
@@ -234,7 +228,6 @@
         async function fetchAndRenderReport() {
             showToast("Sinkronisasi Data...");
             try {
-                // KOREKSI: Mengembalikan load_diagnose untuk sumber data murni Pie Chart
                 const [reqLog, reqBuffer, reqDiag] = await Promise.all([
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json()),
@@ -260,8 +253,6 @@
             document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y} | Global Control`;
 
             let totPO=0, totSales=0;
-            
-            // Variabel Bar Chart
             let skuNKA_PO=0, skuNDLH_PO=0, skuNRD_PO=0, skuNARR_PO=0, skuNKACH_PO=0;
             let skuNKA_Sls=0, skuNDLH_Sls=0, skuNRD_Sls=0, skuNARR_Sls=0, skuNKACH_Sls=0;
 
@@ -271,11 +262,9 @@
                 const tgl = String(i["Tanggal PO"]||"");
                 if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
                 
-                // Perhitungan Global
                 totPO += safeNum(i["TOTAL PO ctn"]);
                 totSales += safeNum(i["Qty Terpenuhi (Kirim)"]);
 
-                // Perhitungan Bar Chart 
                 skuNKA_PO += safeNum(i["PO NKA"]);
                 skuNDLH_PO += safeNum(i["PO NDLH"]);
                 skuNRD_PO += safeNum(i["PO NRD"]);
@@ -292,18 +281,13 @@
             document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
 
-            // KOREKSI PIE CHART: Hitung dari dbDiagData secara akurat dan difilter per bulan
             let fCount=0, mCount=0, aCount=0;
             dbDiagData.forEach(i => {
                 const row = i.json || i;
-                
-                // Mengakomodasi beragam kemungkinan nama kolom tanggal di Google Sheet diagnose
                 const tgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || row.Bulan || "");
                 
-                // Filter logika bulan (melewati row jika bulan tidak cocok dengan pilihan user)
                 if (tgl && !tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`) && !tgl.includes(`${y}-${mStr}`)) return;
                 
-                // Akumulasi data
                 fCount += safeNum(row.failPct || row.col_4);
                 mCount += safeNum(row.moqPct || row.col_6);
                 aCount += safeNum(row.abovePct || row.col_8);
@@ -323,6 +307,7 @@
                 if(String(row.col_6||"").toUpperCase().includes("CRITICAL")) crit++; 
                 else safe++; 
             });
+            
             document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
             document.getElementById('rep-inv-health').innerHTML = `<span style="color:#FF3B30; font-weight:bold;">${crit} SKU Kritis</span> | <span style="color:#34C759; font-weight:bold;">${safe} SKU Aman</span>`;
 
@@ -363,7 +348,6 @@
                                 if(value === 0) return null; 
                                 let sum = 0;
                                 ctx.chart.data.datasets[0].data.forEach(data => sum += data);
-                                // Label menampilkan "Angka Riil \n (Persentase)"
                                 let percentage = (value * 100 / sum).toFixed(1) + "%";
                                 return `${value}\n(${percentage})`;
                             }
@@ -395,20 +379,35 @@
                 const sls = safeNum(i["Qty Terpenuhi (Kirim)"]); 
                 const gap = safeNum(i.GAP);
                 
-                html += `<tr><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; font-weight:bold;">${i.ID}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; color:#4B5563;">${i["Tanggal PO"]}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB;">${i.DC}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${po}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${sls}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:bold; color:${gap>0?'#FF3B30':'#34C759'}">${gap}</td></tr>`;
+                /* Menambahkan page-break-inside: avoid; agar baris tabel tidak terpotong saat pindah halaman di PDF */
+                html += `<tr style="page-break-inside: avoid;"><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; font-weight:bold;">${i.ID}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; color:#4B5563;">${i["Tanggal PO"]}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB;">${i.DC}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${po}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${sls}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:bold; color:${gap>0?'#FF3B30':'#34C759'}">${gap}</td></tr>`;
             });
             html += `</tbody></table>`;
             document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#9CA3AF; padding:40px; font-style:italic;">Tidak ada data pembukuan di filter ini.</p>`;
         }
 
-        function downloadPDF(id, name) {
+        // Fungsi Download PDF yang sudah diperbarui dengan Nama Otomatis
+        function downloadPDF(type) {
+            let id = type === 'analytic' ? 'print-analytic' : 'print-log';
+            let fileName = "";
+            
+            // Penentuan nama file secara dinamis
+            if (type === 'analytic') {
+                const mon = document.getElementById('analytic-month').value || 'All';
+                fileName = `FFI_Analytic_Report_${mon}`;
+            } else {
+                const mon = document.getElementById('report-month').value || 'All';
+                const dc = document.getElementById('report-dc').value || 'ALL';
+                fileName = `FFI_Log_PO_${mon}_${dc.replace(/ /g, "_")}`;
+            }
+
             showToast("Mempersiapkan Dokumen...");
             window.scrollTo(0, 0); 
             
             const element = document.getElementById(id);
             const opt = { 
-                margin:       0, 
-                filename:     `${name}.pdf`, 
+                margin:       [10, 0], // Margin atas-bawah untuk memberi ruang bernapas pada multi-page
+                filename:     `${fileName}.pdf`, 
                 image:        { type: 'jpeg', quality: 1 }, 
                 html2canvas:  { 
                     scale: 2, 
@@ -416,7 +415,8 @@
                     logging: false,
                     backgroundColor: '#ffffff'
                 }, 
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Menghindari elemen terpotong (tabel/grafik)
             };
             
             html2pdf().set(opt).from(element).save().then(() => {
