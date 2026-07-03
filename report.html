@@ -44,8 +44,7 @@
             border-radius: 1.5rem; 
             padding: 20px; 
             border: 1px solid rgba(255,255,255,0.08); 
-            display: flex; 
-            justify-content: center; /* Diubah agar kertas berada di tengah */
+            text-align: center; /* Perbaikan layout agar kertas A4 di tengah tanpa kepotong */
         }
         .a4-paper { 
             width: 210mm; 
@@ -56,9 +55,10 @@
             padding: 15mm; 
             box-sizing: border-box; 
             position: relative; 
-            flex-shrink: 0; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             margin: 0 auto;
+            display: inline-block; /* Mencegah flexbox memotong sisi kiri pada layar HP/Kecil */
+            text-align: left; /* Kembalikan orientasi tulisan ke kiri */
         }
         
         #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -286,7 +286,8 @@
                 const row = i.json || i;
                 const tgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || row.Bulan || "");
                 
-                if (tgl && !tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`) && !tgl.includes(`${y}-${mStr}`)) return;
+                // BUG FIXED: Hapus bypass logika di sini. Pastikan data skip jika filter bulan tidak cocok
+                if (!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`) && !tgl.includes(`${y}-${mStr}`)) return;
                 
                 fCount += safeNum(row.failPct || row.col_4);
                 mCount += safeNum(row.moqPct || row.col_6);
@@ -297,7 +298,10 @@
                 const row = i.json || i;
                 if (!row.col_2 || String(row.col_2).toUpperCase() === 'SKU') return false;
                 const fTgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
-                if (fTgl && !fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`)) return false;
+                
+                // BUG FIXED: Memastikan tabel forecast ter-filter tanggal juga
+                if (!fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`) && !fTgl.includes(`${y}-${mStr}`)) return false;
+                
                 return true;
             });
 
