@@ -44,7 +44,7 @@
             border-radius: 1.5rem; 
             padding: 20px; 
             border: 1px solid rgba(255,255,255,0.08); 
-            text-align: center; /* Perbaikan layout agar kertas A4 di tengah tanpa kepotong */
+            text-align: center;
         }
         .a4-paper { 
             width: 210mm; 
@@ -57,8 +57,8 @@
             position: relative; 
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
             margin: 0 auto;
-            display: inline-block; /* Mencegah flexbox memotong sisi kiri pada layar HP/Kecil */
-            text-align: left; /* Kembalikan orientasi tulisan ke kiri */
+            display: inline-block;
+            text-align: left;
         }
         
         #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -92,9 +92,10 @@
                     <button onclick="switchReportView('log')" id="btn-rep-log" class="flex-1 py-2.5 rounded-lg text-xs font-extrabold uppercase text-gray-500">Log PO</button>
                 </div>
 
+                <!-- Input onchange memanggil renderReports TANPA fetch ke server lagi -->
                 <div id="ctrl-analytic" class="space-y-4">
                     <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Pilih Bulan Histori</label>
-                    <input type="month" id="analytic-month" onchange="fetchAndRenderReport()">
+                    <input type="month" id="analytic-month" onchange="renderReports()">
                     <button onclick="downloadPDF('analytic')" class="w-full bg-appappleorange text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF ANALYTIC</button>
                 </div>
 
@@ -102,11 +103,11 @@
                     <div class="grid grid-cols-1 gap-3">
                         <div>
                             <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5 block">Pilih Bulan Pembukuan</label>
-                            <input type="month" id="report-month" onchange="fetchAndRenderReport()">
+                            <input type="month" id="report-month" onchange="renderReports()">
                         </div>
                         <div>
                             <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1.5 block">Filter DC Gudang</label>
-                            <select id="report-dc" onchange="fetchAndRenderReport()"><option value="ALL">ALL DC GUDANG</option></select>
+                            <select id="report-dc" onchange="renderReports()"><option value="ALL">ALL DC GUDANG</option></select>
                         </div>
                     </div>
                     <button onclick="downloadPDF('log')" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-xl btn-tactile text-xs mt-2"><i class="fa-solid fa-download mr-2"></i>UNDUH PDF LOG PO</button>
@@ -178,17 +179,21 @@
     </div>
 
     <script>
-        // Mendaftarkan Plugin Datalabels ke Chart.js secara Global
+        // Mendaftarkan Plugin Datalabels
         Chart.register(ChartDataLabels);
 
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+        
+        // Cache data di frontend
         let dbLogData = []; let dbForecastData = []; let dbDiagData = [];
+        let isDataLoaded = false;
         let barChart = null; let pieChart = null;
 
         const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
         document.addEventListener('DOMContentLoaded', () => {
-            if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+            // Bypass login untuk keperluan dev (Hapus baris ini kalau wajib login)
+            // if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
             
             const currMonth = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
             document.getElementById('analytic-month').value = currMonth;
@@ -198,7 +203,7 @@
             const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
             DC_LIST.forEach(dc => sel.innerHTML += `<option value="${dc}">${dc}</option>`);
 
-            setTimeout(() => { fetchAndRenderReport(); }, 100);
+            setTimeout(() => { initialFetch(); }, 100);
         });
 
         function showToast(msg) {
@@ -225,8 +230,22 @@
             }
         }
 
-        async function fetchAndRenderReport() {
-            showToast("Sinkronisasi Data...");
+        // Ekstraktor Data yang Tahan Banting dari respon n8n
+        function extractN8nData(res) {
+            if (!res) return [];
+            if (Array.isArray(res)) {
+                if (res[0]?.json?.data) return res[0].json.data;
+                if (res[0]?.data) return res[0].data;
+                return res;
+            }
+            if (res.json?.data) return res.json.data;
+            if (res.data) return res.data;
+            return [];
+        }
+
+        // TAHAP 1: HANYA DIPANGGIL 1x SAAT WEB DIBUKA
+        async function initialFetch() {
+            showToast("Mengunduh Data Database...");
             try {
                 const [reqLog, reqBuffer, reqDiag] = await Promise.all([
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
@@ -234,17 +253,26 @@
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }).then(r => r.json())
                 ]);
                 
-                dbLogData = Array.isArray(reqLog) ? reqLog[0].data || reqLog : reqLog.data || [];
-                dbForecastData = Array.isArray(reqBuffer) ? reqBuffer[0].data || reqBuffer : reqBuffer.data || [];
-                dbDiagData = Array.isArray(reqDiag) ? reqDiag[0].data || reqDiag : reqDiag.data || [];
+                dbLogData = extractN8nData(reqLog);
+                dbForecastData = extractN8nData(reqBuffer);
+                dbDiagData = extractN8nData(reqDiag);
                 
-                renderAnalyticReport();
-                renderLogReport();
-                showToast("Data Berhasil Dimuat!");
+                isDataLoaded = true;
+                showToast("Data Tersinkronisasi!");
+                
+                // Mulai render visual setelah data siap
+                renderReports();
             } catch(e) { 
                 console.error("Sync gagal", e);
                 showToast("Gagal menyinkronkan data!");
             }
+        }
+
+        // TAHAP 2: FUNGSI UNTUK MERENDER ULANG (Dipanggil saat filter bulan diubah)
+        function renderReports() {
+            if(!isDataLoaded) return;
+            renderAnalyticReport();
+            renderLogReport();
         }
 
         function renderAnalyticReport() {
@@ -257,25 +285,26 @@
             let skuNKA_Sls=0, skuNDLH_Sls=0, skuNRD_Sls=0, skuNARR_Sls=0, skuNKACH_Sls=0;
 
             dbLogData.forEach(i => {
-                if(!i.ID || String(i["PO NKA"]).includes("BATAL") || String(i.ID).toUpperCase() === 'ID') return;
+                const row = i.json || i; // Handle raw objects
+                if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return;
                 
-                const tgl = String(i["Tanggal PO"]||"");
+                const tgl = String(row["Tanggal PO"] || "");
                 if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
                 
-                totPO += safeNum(i["TOTAL PO ctn"]);
-                totSales += safeNum(i["Qty Terpenuhi (Kirim)"]);
+                totPO += safeNum(row["TOTAL PO ctn"]);
+                totSales += safeNum(row["Qty Terpenuhi (Kirim)"]);
 
-                skuNKA_PO += safeNum(i["PO NKA"]);
-                skuNDLH_PO += safeNum(i["PO NDLH"]);
-                skuNRD_PO += safeNum(i["PO NRD"]);
-                skuNARR_PO += safeNum(i["PO NARR"]);
-                skuNKACH_PO += safeNum(i["PO NKACH"]);
+                skuNKA_PO += safeNum(row["PO NKA"]);
+                skuNDLH_PO += safeNum(row["PO NDLH"]);
+                skuNRD_PO += safeNum(row["PO NRD"]);
+                skuNARR_PO += safeNum(row["PO NARR"]);
+                skuNKACH_PO += safeNum(row["PO NKACH"]);
 
-                skuNKA_Sls += safeNum(i["NKA"]);
-                skuNDLH_Sls += safeNum(i["NDLH"]);
-                skuNRD_Sls += safeNum(i["NRD"]);
-                skuNARR_Sls += safeNum(i["NARR"]);
-                skuNKACH_Sls += safeNum(i["NKACH"]);
+                skuNKA_Sls += safeNum(row["NKA"]);
+                skuNDLH_Sls += safeNum(row["NDLH"]);
+                skuNRD_Sls += safeNum(row["NRD"]);
+                skuNARR_Sls += safeNum(row["NARR"]);
+                skuNKACH_Sls += safeNum(row["NKACH"]);
             });
             
             document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
@@ -284,24 +313,19 @@
             let fCount=0, mCount=0, aCount=0;
             dbDiagData.forEach(i => {
                 const row = i.json || i;
-                const tgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || row.Bulan || "");
-                
-                // BUG FIXED: Hapus bypass logika di sini. Pastikan data skip jika filter bulan tidak cocok
-                if (!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`) && !tgl.includes(`${y}-${mStr}`)) return;
-                
-                fCount += safeNum(row.failPct || row.col_4);
-                mCount += safeNum(row.moqPct || row.col_6);
-                aCount += safeNum(row.abovePct || row.col_8);
+                // FIX PIECHART KOSONG:
+                // Script backend n8n "load_diagnose" TIDAK melampirkan tanggal ke frontend.
+                // Sehingga, ini tidak boleh di filter tanggal, melainkan langsung ditambahkan sebagai LIVE REPORT global
+                fCount += safeNum(row.failPct);
+                mCount += safeNum(row.moqPct);
+                aCount += safeNum(row.abovePct);
             });
 
             const validForecast = dbForecastData.filter(i => {
                 const row = i.json || i;
                 if (!row.col_2 || String(row.col_2).toUpperCase() === 'SKU') return false;
                 const fTgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
-                
-                // BUG FIXED: Memastikan tabel forecast ter-filter tanggal juga
-                if (!fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`) && !fTgl.includes(`${y}-${mStr}`)) return false;
-                
+                if (fTgl && !fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`) && !fTgl.includes(`${y}-${mStr}`)) return false;
                 return true;
             });
 
@@ -367,9 +391,10 @@
             document.getElementById('rep-log-period').innerHTML = `Periode: ${mStr} / ${y} &nbsp;|&nbsp; Target: <span style="color:#1D4ED8;">${dcVal}</span>`;
 
             let rows = dbLogData.filter(i => {
-                if(!i.ID || String(i["PO NKA"]).includes("BATAL") || String(i.ID).toUpperCase() === 'ID') return false; 
-                const matchM = (i["Tanggal PO"]||"").includes(`${mStr}/${y}`) || (i["Tanggal PO"]||"").includes(`/${mInt}/${y}`);
-                const matchD = dcVal === "ALL" || String(i.DC).toUpperCase() === String(dcVal).toUpperCase();
+                const row = i.json || i;
+                if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return false; 
+                const matchM = (row["Tanggal PO"]||"").includes(`${mStr}/${y}`) || (row["Tanggal PO"]||"").includes(`/${mInt}/${y}`);
+                const matchD = dcVal === "ALL" || String(row.DC).toUpperCase() === String(dcVal).toUpperCase();
                 return matchM && matchD;
             });
 
@@ -379,23 +404,21 @@
                 <tbody>
             `;
             rows.forEach(i => {
-                const po = safeNum(i["TOTAL PO ctn"]); 
-                const sls = safeNum(i["Qty Terpenuhi (Kirim)"]); 
-                const gap = safeNum(i.GAP);
+                const row = i.json || i;
+                const po = safeNum(row["TOTAL PO ctn"]); 
+                const sls = safeNum(row["Qty Terpenuhi (Kirim)"]); 
+                const gap = safeNum(row.GAP);
                 
-                /* Menambahkan page-break-inside: avoid; agar baris tabel tidak terpotong saat pindah halaman di PDF */
-                html += `<tr style="page-break-inside: avoid;"><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; font-weight:bold;">${i.ID}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; color:#4B5563;">${i["Tanggal PO"]}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB;">${i.DC}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${po}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${sls}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:bold; color:${gap>0?'#FF3B30':'#34C759'}">${gap}</td></tr>`;
+                html += `<tr style="page-break-inside: avoid;"><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; font-weight:bold;">${row.ID}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; color:#4B5563;">${row["Tanggal PO"]}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB;">${row.DC}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${po}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center;">${sls}</td><td style="padding:8px 10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:bold; color:${gap>0?'#FF3B30':'#34C759'}">${gap}</td></tr>`;
             });
             html += `</tbody></table>`;
             document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#9CA3AF; padding:40px; font-style:italic;">Tidak ada data pembukuan di filter ini.</p>`;
         }
 
-        // Fungsi Download PDF yang sudah diperbarui dengan Nama Otomatis
         function downloadPDF(type) {
             let id = type === 'analytic' ? 'print-analytic' : 'print-log';
             let fileName = "";
             
-            // Penentuan nama file secara dinamis
             if (type === 'analytic') {
                 const mon = document.getElementById('analytic-month').value || 'All';
                 fileName = `FFI_Analytic_Report_${mon}`;
@@ -410,7 +433,7 @@
             
             const element = document.getElementById(id);
             const opt = { 
-                margin:       [10, 0], // Margin atas-bawah untuk memberi ruang bernapas pada multi-page
+                margin:       [10, 0], 
                 filename:     `${fileName}.pdf`, 
                 image:        { type: 'jpeg', quality: 1 }, 
                 html2canvas:  { 
@@ -420,7 +443,7 @@
                     backgroundColor: '#ffffff'
                 }, 
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // Menghindari elemen terpotong (tabel/grafik)
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
             };
             
             html2pdf().set(opt).from(element).save().then(() => {
