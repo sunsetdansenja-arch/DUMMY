@@ -18,24 +18,20 @@
             theme: {
                 extend: {
                     colors: {
-                        appbg: '#0F1115', 
-                        appcard: '#15181E', 
-                        appcardsec: '#1D212A',
-                        appaccent: '#FF9F0A',
+                        appbg: '#0B0D10', 
+                        appcard: '#16191E', 
+                        appcardsec: '#1F242B',
+                        appaccent: '#83FF02', /* Lime Green sesuai referensi gambar */
                         appcontrast: '#FFFFFF',
-                        appborder: 'rgba(255, 255, 255, 0.05)',
-                        appborderhover: 'rgba(255, 255, 255, 0.12)',
-                        appinput: '#1D212A',
-                        appapplered: '#FF453A', 
-                        appappleblue: '#0A84FF', 
-                        appappleorange: '#FF9F0A', 
-                        appgreen: '#32D74B', 
-                        appred: '#FF453A'
+                        appborder: 'rgba(255, 255, 255, 0.04)',
+                        appborderhover: 'rgba(255, 255, 255, 0.1)',
+                        appinput: '#1F242B',
+                        apptextmuted: '#8E949F'
                     },
                     borderRadius: { 
-                        '3xl': '1.25rem',
-                        '4xl': '1.75rem',
-                        '5xl': '2.25rem'
+                        '2xl': '1rem',
+                        '3xl': '1.5rem',
+                        '4xl': '2rem'
                     },
                     fontFamily: { 
                         'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'], 
@@ -46,45 +42,45 @@
     </script>
     <style>
         body { 
-            background-color: #0F1115; 
+            background-color: #0B0D10; 
             color: #FFFFFF; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
             -webkit-tap-highlight-color: transparent; 
         }
         ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
         
+        /* Input & Dropdown Styling matching Reference Image */
         input, select { 
-            background-color: #1D212A; 
+            background-color: #1F242B; 
             border: 1px solid rgba(255,255,255,0.05); 
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+            transition: all 0.2s ease; 
             color: white; 
             width: 100%; 
-            border-radius: 1.25rem; 
-            padding: 1rem 1.2rem; 
+            border-radius: 1rem; 
+            padding: 0.85rem 1.1rem; 
             outline: none; 
-            font-weight: 600; 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
         }
         input:focus, select:focus { 
-            border-color: #FF9F0A; 
-            background-color: #15181E; 
-            box-shadow: 0 0 0 4px rgba(255, 159, 10, 0.15);
+            border-color: #83FF02; 
+            background-color: #16191E; 
+            box-shadow: 0 0 0 3px rgba(131, 255, 2, 0.15);
         }
         
-        /* Premium Interactive Hover & Focus State Protection */
-        .btn-tactile { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
-        .btn-tactile:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5); }
-        .btn-tactile:active { transform: translateY(1px) scale(0.98); }
-        .btn-tactile:focus-visible { outline: 2px solid #FF9F0A; outline-offset: 2px; }
+        /* Premium Interactive Tactile States */
+        .btn-tactile { transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
+        .btn-tactile:hover { transform: translateY(-1px); filter: brightness(1.1); }
+        .btn-tactile:active { transform: translateY(1px) scale(0.99); }
         
+        /* A4 Document Viewport Arena */
         .a4-wrapper { 
             overflow-x: auto; 
-            background-color: #15181E; 
-            border-radius: 2.25rem; 
-            padding: 30px 20px; 
-            border: 1px solid rgba(255,255,255,0.05); 
+            background-color: #16191E; 
+            border-radius: 2rem; 
+            padding: 40px 20px; 
+            border: 1px solid rgba(255,255,255,0.04); 
             text-align: center;
-            box-shadow: inset 0 4px 20px rgba(0,0,0,0.4);
+            box-shadow: inset 0 4px 30px rgba(0,0,0,0.5);
         }
         .a4-paper { 
             width: 210mm; 
@@ -95,134 +91,162 @@
             padding: 20mm 15mm; 
             box-sizing: border-box; 
             position: relative; 
-            box-shadow: 0 25px 60px -15px rgba(0,0,0,0.9);
+            box-shadow: 0 30px 70px -20px rgba(0,0,0,0.8);
             margin: 0 auto;
             display: inline-block;
             text-align: left;
-            border-radius: 2px;
+            border-radius: 4px;
         }
         
-        #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        .toast-show { transform: translateY(0) !important; }
+        #toast { transform: translate(-50%, -150%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .toast-show { transform: translate(-50%, 0) !important; }
         
-        /* Smooth Hardware-Accelerated Entry Animation */
-        @keyframes premiumFadeUp { 0% { opacity: 0; transform: translateY(20px); filter: blur(4px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
-        .animate-premium-fade { animation: premiumFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-premium-fade { animation: premiumFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes premiumFadeUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
         .hidden-tab { display: none !important; }
     </style>
 </head>
-<body class="flex justify-center antialiased bg-[#0F1115] p-0 md:p-8 lg:p-12">
+<body class="flex justify-center antialiased bg-[#0B0D10] p-0 md:p-6 lg:p-10">
 
-    <!-- TOAST NOTIFICATION SYSTEM -->
-    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-[#15181E] border border-white/10 text-white px-7 py-3.5 rounded-full font-bold text-xs flex items-center gap-3 w-max max-w-[90%] pointer-events-none shadow-[0_20px_40px_rgba(0,0,0,0.6)]">
-        <span id="toast-icon" class="text-appappleorange">⏳</span><span id="toast-msg" class="tracking-wide">Processing Architecture</span>
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed top-6 left-1/2 z-[100] bg-[#16191E] border border-white/10 text-white px-6 py-3 rounded-full font-semibold text-xs flex items-center gap-3 w-max shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+        <span id="toast-icon" class="text-appaccent"><i class="fa-solid fa-circle-notch animate-spin"></i></span><span id="toast-msg" class="tracking-wide">Menyelaraskan Sistem</span>
     </div>
 
-    <!-- MASTER SAAS FRAMEWORK INTERFACE -->
-    <div class="w-full max-w-7xl bg-appbg min-h-screen relative flex flex-col mx-auto md:rounded-5xl md:border border-appborder overflow-hidden shadow-[0_32px_70px_-20px_rgba(0,0,0,0.8)] pb-32">
+    <!-- MASTER SAAS CONTAINER WINDOW -->
+    <div class="w-full max-w-7xl bg-appbg min-h-screen relative flex flex-col mx-auto md:rounded-4xl md:border border-appborder overflow-hidden pb-24 shadow-[0_40px_90px_-30px_rgba(0,0,0,0.9)]">
         
-        <!-- STICKY PREMIUM BLUR HEADER -->
-        <div class="px-8 py-7 md:px-12 sticky top-0 bg-[#0F1115]/85 backdrop-blur-2xl z-20 flex justify-between items-center border-b border-appborder">
-            <div class="flex items-center gap-6">
-                <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-all text-xs flex items-center gap-2 font-bold tracking-widest bg-white/5 px-4 py-2.5 rounded-full border border-white/5 hover:bg-white/10 active:scale-95">
+        <!-- HEADER TOP BAR -->
+        <div class="px-8 py-6 sticky top-0 bg-[#0B0D10]/90 backdrop-blur-xl z-20 flex justify-between items-center border-b border-appborder">
+            <div class="flex items-center gap-4">
+                <button onclick="window.location.href='index.html'" class="text-apptextmuted hover:text-white transition-all text-xs font-bold tracking-wider bg-white/5 px-4 py-2 rounded-full border border-white/5 flex items-center gap-2">
                     <i class="fa-solid fa-arrow-left text-[10px]"></i> LOBBY
                 </button>
             </div>
             
-            <div class="flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-2 rounded-full">
-                <span class="h-2 w-2 rounded-full bg-appappleorange shadow-[0_0_12px_#FF9F0A] animate-pulse"></span>
-                <h2 class="text-xs md:text-sm font-black tracking-[0.2em] uppercase text-white font-apple">Report Generator</h2>
+            <!-- Center Modern Navigation Tabs Block (Inspired by Segmented Controls in Image) -->
+            <div class="flex bg-[#16191E] p-1 rounded-full border border-white/5 items-center">
+                <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all bg-appaccent text-black">
+                    Analytic Report
+                </button>
+                <button onclick="switchReportView('log')" id="btn-rep-log" class="px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all text-apptextmuted hover:text-white">
+                    Log PO Report
+                </button>
             </div>
-            <div class="w-16"></div>
+            
+            <div class="flex items-center gap-3 bg-white/5 border border-white/5 px-4 py-1.5 rounded-full">
+                <span class="h-2 w-2 rounded-full bg-appaccent shadow-[0_0_10px_#83FF02] animate-pulse"></span>
+                <span class="text-xs font-bold tracking-widest text-white uppercase">Engine Active</span>
+            </div>
         </div>
 
-        <!-- MACRO-WHITESPACE WRAPPER CONTAINER -->
-        <div class="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start animate-premium-fade">
+        <!-- MAIN LAYOUT ARCHITECTURE -->
+        <div class="p-6 md:p-8 space-y-8 animate-premium-fade">
             
-            <!-- LEFT CONTROL PANEL PANEL: BENTO BLOCK CONTROLS (4 Columns) -->
-            <div class="lg:col-span-4 space-y-6 bg-appcard border border-appborder p-7 rounded-4xl lg:sticky lg:top-[110px] shadow-xl">
-                <div class="flex bg-black/40 p-1.5 rounded-2xl border border-white/5 text-center">
-                    <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile bg-appappleorange text-black">Analytic</button>
-                    <button onclick="switchReportView('log')" id="btn-rep-log" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile text-gray-400 hover:text-white">Log PO</button>
-                </div>
-
-                <!-- Analytic Action Pipeline -->
-                <div id="ctrl-analytic" class="space-y-4">
-                    <label class="text-[10px] text-gray-400 font-bold uppercase tracking-widest block pl-1">Pilih Bulan Histori</label>
-                    <input type="month" id="analytic-month" onchange="renderReports()">
-                    <button onclick="downloadPDF('analytic')" class="w-full bg-appappleorange text-black font-black py-4.5 rounded-xl btn-tactile text-xs tracking-widest mt-2 flex items-center justify-center gap-2 border border-appappleorange/20 hover:bg-appappleorange/90">
-                        <i class="fa-solid fa-file-pdf text-sm"></i> UNDUH PDF ANALYTIC
-                    </button>
-                </div>
-
-                <!-- Log PO Action Pipeline -->
-                <div id="ctrl-log" class="hidden-tab space-y-4">
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2 block pl-1">Pilih Bulan Pembukuan</label>
-                            <input type="month" id="report-month" onchange="renderReports()">
+            <!-- TOP SECTION: CONTEXTUAL BENTO CONFIGURATION PANELS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Controller Pipeline Card (4 Columns) -->
+                <div class="lg:col-span-4 bg-appcard border border-appborder p-6 rounded-3xl flex flex-col justify-between shadow-xl min-h-[190px]">
+                    <div class="space-y-4 w-full">
+                        <!-- Analytic Filter Pipeline -->
+                        <div id="ctrl-analytic" class="space-y-3">
+                            <label class="text-[11px] text-apptextmuted font-bold uppercase tracking-widest block">Pilih Bulan Histori</label>
+                            <input type="month" id="analytic-month" onchange="renderReports()">
                         </div>
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2 block pl-1">Filter DC Gudang</label>
-                            <select id="report-dc" onchange="renderReports()">
-                                <option value="ALL">ALL DC GUDANG</option>
-                            </select>
+
+                        <!-- Log PO Filter Pipeline -->
+                        <div id="ctrl-log" class="hidden-tab space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-[11px] text-apptextmuted font-bold uppercase tracking-widest block mb-2">Bulan</label>
+                                    <input type="month" id="report-month" onchange="renderReports()">
+                                </div>
+                                <div>
+                                    <label class="text-[11px] text-apptextmuted font-bold uppercase tracking-widest block mb-2">DC Gudang</label>
+                                    <select id="report-dc" onchange="renderReports()">
+                                        <option value="ALL">ALL DC</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <button onclick="downloadPDF('log')" class="w-full bg-appgreen text-black font-black py-4.5 rounded-xl btn-tactile text-xs tracking-widest mt-2 flex items-center justify-center gap-2 border border-appgreen/20 hover:bg-appgreen/90">
-                        <i class="fa-solid fa-file-pdf text-sm"></i> UNDUH PDF LOG PO
-                    </button>
+
+                    <!-- Dynamic Master Action Button (Matching the bright action buttons in reference image) -->
+                    <div class="mt-4 w-full">
+                        <button id="master-action-btn" onclick="triggerDownload()" class="w-full bg-appaccent text-black font-black py-3.5 rounded-xl btn-tactile text-xs tracking-widest flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(131,255,2,0.2)]">
+                            <i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD ANALYTIC DOKUMEN
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Live Quick Summary Bento Widgets (8 Columns - Simulating the top overview row of image) -->
+                <div class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-appcard border border-appborder p-5 rounded-3xl flex flex-col justify-between">
+                        <span class="text-[10px] text-apptextmuted font-bold tracking-wider uppercase">Fulfillment PO</span>
+                        <h3 id="stat-fulfill" class="text-3xl font-black mt-3 text-appaccent">0%</h3>
+                    </div>
+                    <div class="bg-appcard border border-appborder p-5 rounded-3xl flex flex-col justify-between">
+                        <span class="text-[10px] text-apptextmuted font-bold tracking-wider uppercase">Total Demand</span>
+                        <h3 id="stat-po-vol" class="text-2xl font-black mt-4 text-white">0 <span class="text-xs text-apptextmuted font-normal">ctn</span></h3>
+                    </div>
+                    <div class="bg-appcard border border-appborder p-5 rounded-3xl flex flex-col justify-between">
+                        <span class="text-[10px] text-apptextmuted font-bold tracking-wider uppercase">Fulfillment Kirim</span>
+                        <h3 id="stat-sales-vol" class="text-2xl font-black mt-4 text-white">0 <span class="text-xs text-apptextmuted font-normal">ctn</span></h3>
+                    </div>
+                    <div class="bg-appcard border border-appborder p-5 rounded-3xl flex flex-col justify-between">
+                        <span class="text-[10px] text-apptextmuted font-bold tracking-wider uppercase">Logistik Status</span>
+                        <h3 id="stat-log-health" class="text-xs font-bold mt-5 text-white tracking-wide uppercase leading-tight">-</h3>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- RIGHT CONTROL PANEL: LIVE PRINT PREVIEW VIEWPORT (8 Columns) -->
-            <div class="lg:col-span-8 space-y-6 overflow-hidden">
-                <div class="flex items-center justify-center gap-2 text-[10px] text-gray-500 font-black uppercase tracking-[0.25em] mb-2 bg-white/5 py-2.5 rounded-full border border-white/5">
-                    <i class="fa-solid fa-eye animate-pulse"></i> Live Print Viewport (A4 Resmi)
+            <!-- BOTTOM SECTION: LIVE PRINT VIEWPORT AREA -->
+            <div class="space-y-4">
+                <div class="text-[10px] text-apptextmuted font-bold uppercase tracking-[0.2em] flex items-center gap-2 pl-1">
+                    <i class="fa-solid fa-print"></i> Live Document Viewport (A4 Standar Resmi)
                 </div>
                 
                 <!-- Viewport Area: Analytic Report -->
                 <div class="a4-wrapper" id="view-print-analytic">
                     <div id="print-analytic" class="a4-paper">
-                        <!-- Premium Typography Corporate Letterhead -->
-                        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px double #D1D5DB; padding-bottom: 20px;">
-                            <h1 style="font-size: 26px; font-weight: 900; margin:0; color:#FF453A; letter-spacing: 0.05em; font-family:Arial, Helvetica, sans-serif;">FAMILY FOOD INDONESIA</h1>
-                            <p style="margin: 6px 0 0 0; color: #4B5563; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em;">Executive SC Analytic Report</p>
+                        <div style="text-align: center; margin-bottom: 35px; border-bottom: 3px double #D1D5DB; padding-bottom: 20px;">
+                            <h1 style="font-size: 26px; font-weight: 900; margin:0; color:#16191E; letter-spacing: 0.05em; font-family:Arial, sans-serif;">FAMILY FOOD INDONESIA</h1>
+                            <p style="margin: 6px 0 0 0; color: #4B5563; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em;">Executive Supply Chain Analytic Report</p>
                             <p style="margin: 4px 0 0 0; color: #9CA3AF; font-size: 11px; font-style:italic; font-weight: 500;" id="lbl-analytic-date">-</p>
                         </div>
                         
-                        <!-- Premium Contrast Corporate Value Metrics -->
                         <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 30px; font-family: Arial, sans-serif;">
-                            <div style="width: 33.33%; background:#F3F4F6; padding:18px 15px; border-radius:12px; border:1px solid #E5E7EB; box-sizing: border-box; transition: all 0.3s;">
-                                <div style="font-size:10px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Fulfillment PO</div>
-                                <div id="rep-fulfill" style="font-size:26px; font-weight:900; margin-top:6px; color:#32D74B">0%</div>
+                            <div style="width: 33.33%; background:#F8FAFC; padding:18px 15px; border-radius:12px; border:1px solid #E2E8F0; box-sizing: border-box;">
+                                <div style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Fulfillment Rate</div>
+                                <div id="rep-fulfill" style="font-size:26px; font-weight:900; margin-top:6px; color:#10B981">0%</div>
                             </div>
-                            <div style="width: 33.33%; background:#F3F4F6; padding:18px 15px; border-radius:12px; border:1px solid #E5E7EB; box-sizing: border-box;">
-                                <div style="font-size:10px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Alert Supply Chain</div>
-                                <div id="rep-alert" style="font-size:12px; font-weight:900; margin-top:14px; color:#FF453A; letter-spacing: 0.02em;">N/A</div>
+                            <div style="width: 33.33%; background:#F8FAFC; padding:18px 15px; border-radius:12px; border:1px solid #E2E8F0; box-sizing: border-box;">
+                                <div style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Alert Supply Chain</div>
+                                <div id="rep-alert" style="font-size:12px; font-weight:900; margin-top:14px; color:#EF4444; letter-spacing: 0.02em;">N/A</div>
                             </div>
-                            <div style="width: 33.33%; background:#F3F4F6; padding:18px 15px; border-radius:12px; border:1px solid #E5E7EB; box-sizing: border-box;">
-                                <div style="font-size:10px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Volume (PO/Sales)</div>
-                                <div id="rep-prod" style="font-size:18px; font-weight:900; margin-top:10px; color:#0A84FF">0 / 0</div>
+                            <div style="width: 33.33%; background:#F8FAFC; padding:18px 15px; border-radius:12px; border:1px solid #E2E8F0; box-sizing: border-box;">
+                                <div style="font-size:10px; color:#64748B; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Volume (PO/Sales)</div>
+                                <div id="rep-prod" style="font-size:18px; font-weight:900; margin-top:10px; color:#3B82F6">0 / 0</div>
                             </div>
                         </div>
 
-                        <div style="background:#F3F4F6; padding:16px; border-radius:12px; border:1px solid #E5E7EB; margin-bottom:30px; text-align:center; font-family:Arial, sans-serif;">
-                            <div style="font-size:11px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em; mb-2">Global Inventory Health Status</div>
-                            <div id="rep-inv-health" style="font-size:16px; font-weight:900; margin-top:6px; color:#000000;">0 Critical | 0 Safe</div>
+                        <div style="background:#F8FAFC; padding:16px; border-radius:12px; border:1px solid #E2E8F0; margin-bottom:35px; text-align:center; font-family:Arial, sans-serif;">
+                            <div style="font-size:11px; color:#64748B; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Global Inventory Health Status</div>
+                            <div id="rep-inv-health" style="font-size:15px; font-weight:900; margin-top:6px; color:#0F172A;">0 Critical | 0 Safe</div>
                         </div>
 
-                        <!-- Data Presentation Graphical Grid Section -->
                         <table style="width: 100%; table-layout: fixed; margin-top: 40px; font-family: Arial, sans-serif; border: none; page-break-inside: avoid;">
                             <tr>
                                 <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 15px; border: none;">
-                                    <h4 style="font-size:13px; margin-bottom:20px; font-weight:800; color:#374151; text-transform: uppercase; letter-spacing: 0.05em;">SKU Demand vs Target</h4>
+                                    <h4 style="font-size:13px; margin-bottom:20px; font-weight:800; color:#334155; text-transform: uppercase; letter-spacing: 0.05em;">SKU Demand vs Target</h4>
                                     <div style="width: 280px; height: 210px; margin: 0 auto; display: flex; justify-content: center; align-items: center;">
                                         <canvas id="chartBar" width="280" height="210"></canvas>
                                     </div>
                                 </td>
                                 <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 15px; border: none;">
-                                    <h4 style="font-size:13px; margin-bottom:20px; font-weight:800; color:#374151; text-transform: uppercase; letter-spacing: 0.05em;">DC Issue Distribution</h4>
+                                    <h4 style="font-size:13px; margin-bottom:20px; font-weight:800; color:#334155; text-transform: uppercase; letter-spacing: 0.05em;">DC Issue Distribution</h4>
                                     <div style="width: 280px; height: 210px; margin: 0 auto; display: flex; justify-content: center; align-items: center;">
                                         <canvas id="chartPie" width="280" height="210"></canvas>
                                     </div>
@@ -236,7 +260,7 @@
                 <div class="a4-wrapper hidden-tab" id="view-print-log">
                     <div id="print-log" class="a4-paper">
                         <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px double #D1D5DB; padding-bottom: 20px; font-family: Arial, sans-serif;">
-                            <h1 style="font-size: 24px; font-weight: 900; margin:0; color:#0A84FF; letter-spacing: 0.05em;">LOG PURCHASE ORDER REPORT</h1>
+                            <h1 style="font-size: 24px; font-weight: 900; margin:0; color:#3B82F6; letter-spacing: 0.05em;">LOG PURCHASE ORDER REPORT</h1>
                             <p style="margin: 8px 0 0 0; color: #4B5563; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;" id="rep-log-period">Periode Pembukuan: -</p>
                         </div>
                         <div id="rep-log-content" style="font-family: Arial, sans-serif; width:100%;"></div>
@@ -247,7 +271,7 @@
         </div>
     </div>
 
-    <!-- CORE REPORTING METRICS ARCHITECTURE & PROCESSING SCRIPT -->
+    <!-- CORE PROCESSING SYSTEM SCRIPT -->
     <script>
         Chart.register(ChartDataLabels);
 
@@ -258,6 +282,7 @@
         let isDataLoaded = false;
         let barChart = null; 
         let pieChart = null;
+        let currentActiveTab = 'analytic';
 
         const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
@@ -283,23 +308,35 @@
         }
 
         function switchReportView(type) {
+            currentActiveTab = type;
             document.getElementById('view-print-analytic').classList.add('hidden-tab');
             document.getElementById('view-print-log').classList.add('hidden-tab');
             document.getElementById('ctrl-analytic').classList.add('hidden-tab');
             document.getElementById('ctrl-log').classList.add('hidden-tab');
             
-            document.getElementById('btn-rep-analytic').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile text-gray-400 hover:text-white";
-            document.getElementById('btn-rep-log').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile text-gray-400 hover:text-white";
+            document.getElementById('btn-rep-analytic').className = "px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all text-apptextmuted hover:text-white";
+            document.getElementById('btn-rep-log').className = "px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all text-apptextmuted hover:text-white";
             
+            const actionBtn = document.getElementById('master-action-btn');
+
             if(type === 'analytic') {
                 document.getElementById('view-print-analytic').classList.remove('hidden-tab');
                 document.getElementById('ctrl-analytic').classList.remove('hidden-tab');
-                document.getElementById('btn-rep-analytic').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile bg-appappleorange text-black";
+                document.getElementById('btn-rep-analytic').className = "px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all bg-appaccent text-black";
+                actionBtn.className = "w-full bg-appaccent text-black font-black py-3.5 rounded-xl btn-tactile text-xs tracking-widest flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(131,255,2,0.2)]";
+                actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD ANALYTIC DOKUMEN`;
             } else {
                 document.getElementById('view-print-log').classList.remove('hidden-tab');
                 document.getElementById('ctrl-log').classList.remove('hidden-tab');
-                document.getElementById('btn-rep-log').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile bg-appgreen text-black";
+                document.getElementById('btn-rep-log').className = "px-6 py-2 rounded-full text-xs font-bold tracking-wide transition-all bg-appaccent text-black";
+                actionBtn.className = "w-full bg-appaccent text-black font-black py-3.5 rounded-xl btn-tactile text-xs tracking-widest flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(131,255,2,0.2)]";
+                actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD LOG PO DOKUMEN`;
             }
+            renderReports();
+        }
+
+        function triggerDownload() {
+            downloadPDF(currentActiveTab);
         }
 
         function extractN8nData(res) {
@@ -326,7 +363,7 @@
                 dbForecastData = extractN8nData(reqBuffer);
                 
                 isDataLoaded = true;
-                showToast("Data Tersinkronisasi!");
+                showToast("Sistem Siap Diolah!");
                 renderReports();
             } catch(e) { 
                 console.error("Sync gagal", e);
@@ -343,7 +380,7 @@
         function renderAnalyticReport() {
             const mon = document.getElementById('analytic-month').value; if(!mon) return;
             const [y, mStr] = mon.split('-'); const mInt = parseInt(mStr, 10);
-            document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y} | Global Control`;
+            document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y}`;
 
             let totPO=0, totSales=0;
             let fCount=0, mCount=0, aCount=0; 
@@ -384,8 +421,14 @@
                 }
             });
             
-            document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
+            const rateStr = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
+            document.getElementById('rep-fulfill').innerText = rateStr;
             document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
+            
+            /* Sync Widgets Outside Dashboard */
+            document.getElementById('stat-fulfill').innerText = rateStr;
+            document.getElementById('stat-po-vol').innerHTML = `${totPO} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
+            document.getElementById('stat-sales-vol').innerHTML = `${totSales} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
 
             const validForecast = dbForecastData.filter(i => {
                 const row = i.json || i;
@@ -403,7 +446,16 @@
             });
             
             document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
-            document.getElementById('rep-inv-health').innerHTML = `<span style="color:#FF453A; font-weight:bold;">${crit} SKU Kritis</span> &nbsp;|&nbsp; <span style="color:#32D74B; font-weight:bold;">${safe} SKU Aman</span>`;
+            document.getElementById('rep-inv-health').innerHTML = `<span style="color:#EF4444; font-weight:bold;">${crit} SKU Kritis</span> &nbsp;|&nbsp; <span style="color:#10B981; font-weight:bold;">${safe} SKU Aman</span>`;
+            
+            const logHealthEl = document.getElementById('stat-log-health');
+            if(crit > 0) {
+                logHealthEl.innerText = "🚨 CRITICAL ATTENTION";
+                logHealthEl.className = "text-xs font-bold mt-5 text-red-400 tracking-wide uppercase leading-tight";
+            } else {
+                logHealthEl.innerText = "✨ SAFE LOGISTICS";
+                logHealthEl.className = "text-xs font-bold mt-5 text-appaccent tracking-wide uppercase leading-tight";
+            }
 
             if(barChart) barChart.destroy(); 
             if(pieChart) pieChart.destroy();
@@ -413,8 +465,8 @@
                 data: { 
                     labels: ['NKA', 'NDLH', 'NRD', 'NARR', 'NKACH'], 
                     datasets: [
-                        { label: 'Demand', data: [skuNKA_Sls, skuNDLH_Sls, skuNRD_Sls, skuNARR_Sls, skuNKACH_Sls], backgroundColor: '#0A84FF' },
-                        { label: 'PO Target', data: [skuNKA_PO, skuNDLH_PO, skuNRD_PO, skuNARR_PO, skuNKACH_PO], backgroundColor: '#FF453A' }
+                        { label: 'Demand', data: [skuNKA_Sls, skuNDLH_Sls, skuNRD_Sls, skuNARR_Sls, skuNKACH_Sls], backgroundColor: '#3B82F6' },
+                        { label: 'PO Target', data: [skuNKA_PO, skuNDLH_PO, skuNRD_PO, skuNARR_PO, skuNKACH_PO], backgroundColor: '#EF4444' }
                     ] 
                 },
                 options: { 
@@ -427,7 +479,7 @@
                 type: 'pie',
                 data: { 
                     labels: ['WH Fail', 'Under MOQ', 'Safe'], 
-                    datasets: [{ data: [fCount, mCount, aCount], backgroundColor: ['#FF453A', '#FF9F0A', '#32D74B'] }] 
+                    datasets: [{ data: [fCount, mCount, aCount], backgroundColor: ['#EF4444', '#F59E0B', '#10B981'] }] 
                 },
                 options: { 
                     animation: false, responsive: false, maintainAspectRatio: false,
@@ -453,7 +505,7 @@
         function renderLogReport() {
             const mon = document.getElementById('report-month').value; const dcVal = document.getElementById('report-dc').value;
             if(!mon) return; const [y, mStr] = mon.split('-'); const mInt = parseInt(mStr, 10);
-            document.getElementById('rep-log-period').innerHTML = `Periode: ${mStr} / ${y} &nbsp;|&nbsp; Target: <span style="color:#0A84FF;">${dcVal}</span>`;
+            document.getElementById('rep-log-period').innerHTML = `Periode: ${mStr} / ${y} &nbsp;|&nbsp; Target: <span style="color:#3B82F6;">${dcVal}</span>`;
 
             let rows = dbLogData.filter(i => {
                 const row = i.json || i;
@@ -466,13 +518,13 @@
             let html = `
             <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family: Arial, sans-serif;">
                 <thead>
-                    <tr style="background:#F3F4F6; color:#374151;">
-                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; font-weight:800;">ID PO</th>
-                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; font-weight:800;">TANGGAL</th>
-                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; font-weight:800;">DC</th>
-                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; text-align:center; font-weight:800;">PO (CTN)</th>
-                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; text-align:center; font-weight:800;">SALES</th>
-                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; text-align:center; font-weight:800;">GAP</th>
+                    <tr style="background:#F8FAFC; color:#334155;">
+                        <th style="padding:12px 10px; border-bottom:2px solid #CBD5E1; font-weight:800;">ID PO</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #CBD5E1; font-weight:800;">TANGGAL</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #CBD5E1; font-weight:800;">DC</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #CBD5E1; text-align:center; font-weight:800;">PO (CTN)</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #CBD5E1; text-align:center; font-weight:800;">SALES</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #CBD5E1; text-align:center; font-weight:800;">GAP</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -485,16 +537,16 @@
                 
                 html += `
                 <tr style="page-break-inside: avoid;">
-                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; font-weight:bold; color:#000000;">${row.ID}</td>
-                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; color:#4B5563;">${row["Tanggal PO"]}</td>
-                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; font-weight:500;">${row.DC}</td>
-                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:500;">${po}</td>
-                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:500;">${sls}</td>
-                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:bold; color:${gap>0?'#FF453A':'#32D74B'}">${gap}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E2E8F0; font-weight:bold; color:#0F172A;">${row.ID}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E2E8F0; color:#475569;">${row["Tanggal PO"]}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E2E8F0; font-weight:500;">${row.DC}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:center; font-weight:500;">${po}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:center; font-weight:500;">${sls}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E2E8F0; text-align:center; font-weight:bold; color:${gap>0?'#EF4444':'#10B981'}">${gap}</td>
                 </tr>`;
             });
             html += `</tbody></table>`;
-            document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#9CA3AF; padding:50px; font-style:italic; font-size:12px;">Tidak ada data pembukuan di filter ini.</p>`;
+            document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#94A3B8; padding:50px; font-style:italic; font-size:12px;">Tidak ada data pembukuan di filter ini.</p>`;
         }
 
         function downloadPDF(type) {
