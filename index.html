@@ -38,7 +38,7 @@
         input { background-color: #161B22; border: 1.5px solid rgba(255,255,255,0.05); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); color: white; width: 100%; border-radius: 9999px; padding: 1.1rem 1.6rem; outline: none; font-weight: 600; font-size: 0.95rem; text-align: center; }
         input:focus { border-color: #A3E635; background-color: #21262D; box-shadow: 0 0 20px rgba(163,230,53,0.15); }
         .btn-tactile { transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .btn-tactile:active { transform: scale(0.96); opacity: 0.92; }
+        .btn-tactile:active { transform: scale(0.97); opacity: 0.92; }
         #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .toast-show { transform: translateY(0) !important; }
         @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -47,35 +47,36 @@
 </head>
 <body class="flex justify-center antialiased font-apple min-h-screen bg-[#0D1117]">
 
+    <!-- ALERT TOAST -->
     <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none transition-transform duration-300 border bg-appcard border-appgreen text-white shadow-[0_0_20px_rgba(52,199,89,0.2)]">
         <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
     </div>
 
-    <!-- MAIN CONTAINER (Bento Architecture & Apple OS Premium Canvas Minimalis Style) -->
+    <!-- MAIN ENGINE WRAPPER -->
     <div class="w-full max-w-md md:max-w-xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5">
         
-        <!-- LAYAR LOGIN -->
-        <div id="view-login" class="flex-col flex-1 p-9 justify-center items-center relative z-40">
+        <!-- ================= LAYAR LOGIN ================= -->
+        <div id="view-login" class="flex-col flex-1 p-8 justify-center items-center relative z-40">
             <div class="w-full max-w-sm space-y-12">
                 <div class="text-center space-y-4">
-                    <img src="./LOGO FFI.png" alt="Family Food Logo" onerror="this.style.display='none'" class="w-36 md:w-48 h-auto mx-auto mb-8 drop-shadow-[0_0_25px_rgba(163,230,53,0.2)] animate-fade">
-                    <p class="text-[10px] md:text-xs text-gray-400 uppercase tracking-[0.4em] font-black animate-fade" style="animation-delay: 100ms; opacity:0;">Secure Access Center</p>
+                    <img src="./LOGO FFI.png" alt="Family Food Logo" onerror="this.style.display='none'" class="w-36 md:w-44 h-auto mx-auto mb-8 drop-shadow-[0_0_25px_rgba(163,230,53,0.15)] animate-fade">
+                    <p class="text-[10px] text-gray-400 uppercase tracking-[0.4em] font-black animate-fade" style="animation-delay: 100ms; opacity:0;">Secure Access Center</p>
                 </div>
-                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-5 animate-fade" style="animation-delay: 200ms; opacity:0;">
+                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4 animate-fade" style="animation-delay: 200ms; opacity:0;">
                     <input type="text" id="login-user" placeholder="USER ID" required class="font-black uppercase tracking-widest md:py-4">
                     <input type="password" id="login-pass" placeholder="PASSWORD" required class="font-black tracking-widest md:py-4">
-                    <button type="submit" id="btn-login" class="w-full bg-white text-black hover:bg-appneon hover:text-black transition-colors duration-300 font-black py-4.5 md:py-5 rounded-full shadow-[0_4px_20px_rgba(255,255,255,0.15)] mt-6 btn-tactile text-xs md:text-sm tracking-widest uppercase">MASUK SISTEM</button>
+                    <button type="submit" id="btn-login" class="w-full bg-white text-black hover:bg-appneon transition-colors duration-300 font-black py-4.5 md:py-5 rounded-full shadow-[0_4px_20px_rgba(255,255,255,0.1)] mt-6 btn-tactile text-xs md:text-sm tracking-widest uppercase">MASUK SISTEM</button>
                 </form>
             </div>
         </div>
 
-        <!-- LAYAR LOBBY (DASHBOARD MENU) -->
+        <!-- ================= LAYAR LOBBY (VARY & ENHANCE LEVEL 2: ASYMMETRIC BENTO GRID) ================= -->
         <div id="view-lobby" class="flex-col min-h-screen bg-appbg relative">
             
-            <!-- STICKY NAVBAR -->
-            <div class="px-6 py-5 md:px-8 border-b border-white/5 bg-appbg/90 backdrop-blur-xl sticky top-0 z-20 flex justify-between items-center rounded-b-3xl">
+            <!-- PREMIUM STICKY NAVBAR -->
+            <div class="px-6 py-5 md:px-8 border-b border-white/5 bg-appbg/90 backdrop-blur-xl sticky top-0 z-20 flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <img src="./LOGO FFI.png" alt="Family Food Logo" onerror="this.style.display='none'" class="h-9 md:h-11 w-auto object-contain">
+                    <img src="./LOGO FFI.png" alt="Family Food Logo" onerror="this.style.display='none'" class="h-9 md:h-10 w-auto object-contain">
                     <h2 class="text-lg md:text-xl font-black text-white tracking-tighter leading-none uppercase">Family<span class="text-appneon">Food</span></h2>
                 </div>
                 <div class="flex items-center gap-2.5 bg-white/5 border border-white/10 px-4 py-2 rounded-full">
@@ -84,56 +85,75 @@
                 </div>
             </div>
 
-            <!-- CORE CONTENT MODULES -->
+            <!-- CORE CONTAINER FOR DASHBOARD -->
             <div class="px-6 py-8 md:px-8 flex-1 flex flex-col">
-                <h3 class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.25em] mb-5 px-1">Akses Modul Sistem</h3>
+                <div class="flex justify-between items-center mb-6 px-1">
+                    <h3 class="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.25em]">Akses Modul Sistem</h3>
+                    <span class="text-[9px] font-bold text-appneon uppercase tracking-wider bg-appneon/10 px-2.5 py-1 rounded-full border border-appneon/20">Active Session</span>
+                </div>
                 
-                <!-- BENTO GRID SYSTEM -->
-                <div class="grid grid-cols-2 gap-4">
-                    <!-- Button 1: Input -->
-                    <button onclick="goTo('input.html')" class="bg-appcard border border-white/5 p-6 md:p-8 rounded-3xl flex flex-col items-start justify-between gap-8 btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-40 md:h-44 text-left">
-                        <div class="w-11 h-11 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
+                <!-- ASYMMETRIC BENTO GRID LAYOUT OPTIMIZED FOR MICRO-SPACING -->
+                <div class="grid grid-cols-2 gap-3.5">
+                    
+                    <!-- Box 1: Input Operasional (Large Block - High Priority CTA) -->
+                    <button onclick="goTo('input.html')" class="col-span-2 bg-appcard border border-white/5 p-6 rounded-3xl flex items-center justify-between btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-32 text-left">
+                        <div class="space-y-2 relative z-10">
+                            <span class="text-xs font-black text-white uppercase tracking-wider block">Input Operasional</span>
+                            <span class="text-[10px] text-gray-400 font-medium block max-w-[200px] normal-case leading-tight">Pencatatan data logistik dan suplai harian produksi otomatis.</span>
+                        </div>
+                        <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300 shrink-0">
                             <i class="fa-solid fa-plus text-base"></i>
                         </div>
-                        <span class="text-[11px] md:text-xs font-black text-white uppercase tracking-wider leading-snug">Input<br><span class="text-gray-400 font-medium">Operasional</span></span>
                     </button>
                     
-                    <!-- Button 2: Analytic -->
-                    <button onclick="goTo('analytic.html')" class="bg-appcard border border-white/5 p-6 md:p-8 rounded-3xl flex flex-col items-start justify-between gap-8 btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-40 md:h-44 text-left">
-                        <div class="w-11 h-11 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
-                            <i class="fa-solid fa-chart-simple text-base"></i>
+                    <!-- Box 2: Analytic & QC (Medium Square Block) -->
+                    <button onclick="goTo('analytic.html')" class="bg-appcard border border-white/5 p-5 rounded-3xl flex flex-col items-start justify-between btn-tactile hover:border-appneon/30 transition-all group h-40 text-left">
+                        <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
+                            <i class="fa-solid fa-chart-simple text-sm"></i>
                         </div>
-                        <span class="text-[11px] md:text-xs font-black text-white uppercase tracking-wider leading-snug">Analytic<br><span class="text-gray-400 font-medium">& QC</span></span>
+                        <div class="space-y-1">
+                            <span class="text-[11px] font-black text-white uppercase tracking-wider block">Analytic & QC</span>
+                            <span class="text-[9px] text-gray-400 font-medium block normal-case leading-none">Monitoring kualitas pasokan.</span>
+                        </div>
                     </button>
 
-                    <!-- Button 3: Database -->
-                    <button onclick="goTo('data.html')" class="bg-appcard border border-white/5 p-6 md:p-8 rounded-3xl flex flex-col items-start justify-between gap-8 btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-40 md:h-44 text-left">
-                        <div class="w-11 h-11 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
-                            <i class="fa-solid fa-database text-base"></i>
+                    <!-- Box 3: Database History (Medium Square Block) -->
+                    <button onclick="goTo('data.html')" class="bg-appcard border border-white/5 p-5 rounded-3xl flex flex-col items-start justify-between btn-tactile hover:border-appneon/30 transition-all group h-40 text-left">
+                        <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
+                            <i class="fa-solid fa-database text-sm"></i>
                         </div>
-                        <span class="text-[11px] md:text-xs font-black text-white uppercase tracking-wider leading-snug">Database<br><span class="text-gray-400 font-medium">History</span></span>
+                        <div class="space-y-1">
+                            <span class="text-[11px] font-black text-white uppercase tracking-wider block">Database History</span>
+                            <span class="text-[9px] text-gray-400 font-medium block normal-case leading-none">Eksplorasi riwayat logs arsip.</span>
+                        </div>
                     </button>
 
-                    <!-- Button 4: Report -->
-                    <button onclick="goTo('report.html')" class="bg-appcard border border-white/5 p-6 md:p-8 rounded-3xl flex flex-col items-start justify-between gap-8 btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-40 md:h-44 text-left">
-                        <div class="w-11 h-11 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
-                            <i class="fa-solid fa-file-pdf text-base"></i>
+                    <!-- Box 4: Cetak Laporan (Wide Banner Block - Secondary Priority) -->
+                    <button onclick="goTo('report.html')" class="col-span-2 bg-appcard border border-white/5 p-5 rounded-3xl flex items-center justify-between btn-tactile hover:border-appneon/30 transition-all group h-20 text-left">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
+                                <i class="fa-solid fa-file-pdf text-sm"></i>
+                            </div>
+                            <div>
+                                <span class="text-[11px] font-black text-white uppercase tracking-wider block">Cetak Laporan</span>
+                                <span class="text-[9px] text-gray-400 font-medium block normal-case leading-none">Generasi berkas rekapitulasi performa outlet.</span>
+                            </div>
                         </div>
-                        <span class="text-[11px] md:text-xs font-black text-white uppercase tracking-wider leading-snug">Cetak<br><span class="text-gray-400 font-medium">Laporan</span></span>
+                        <i class="fa-solid fa-chevron-right text-gray-600 text-xs group-hover:text-appneon transition-colors mr-2"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- SYSTEM FOOTER ACTION CONTROLS -->
+            <!-- ADMINISTRATIVE FOOTER CONTROLS -->
             <div class="mt-auto w-full px-6 md:px-8 pb-8 pt-4">
-                <button onclick="logout()" class="w-full bg-white/5 border border-white/5 text-gray-400 hover:text-appred hover:bg-appred/10 hover:border-appred/20 font-black py-4 md:py-5 rounded-2xl btn-tactile transition-all duration-300 text-[10px] md:text-xs uppercase tracking-widest flex items-center justify-center gap-2">
+                <button onclick="logout()" class="w-full bg-white/5 border border-white/5 text-gray-400 hover:text-appred hover:bg-appred/10 hover:border-appred/20 font-black py-4 rounded-xl btn-tactile transition-all duration-300 text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> KELUAR SISTEM
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- CORE BUSINESS LOGIC PARSER -->
+    <!-- CORE JAVASCRIPT LOGIC STORAGE & WEBHOOK HANDLER -->
     <script>
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
 
@@ -188,7 +208,7 @@
                 }
             } catch (err) {
                 showToast("Koneksi Server Error", true);
-            } finaly {
+            } finally {
                 btn.innerHTML = `MASUK SISTEM`;
                 btn.classList.remove('opacity-50', 'pointer-events-none');
             }
