@@ -38,7 +38,7 @@
         input { background-color: #161B22; border: 1.5px solid rgba(255,255,255,0.05); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); color: white; width: 100%; border-radius: 9999px; padding: 1.1rem 1.6rem; outline: none; font-weight: 600; font-size: 0.95rem; text-align: center; }
         input:focus { border-color: #A3E635; background-color: #21262D; box-shadow: 0 0 20px rgba(163,230,53,0.15); }
         .btn-tactile { transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .btn-tactile:active { transform: scale(0.97); opacity: 0.92; }
+        .btn-tactile:active { transform: scale(0.98); opacity: 0.92; }
         #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .toast-show { transform: translateY(0) !important; }
         @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -52,8 +52,8 @@
         <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
     </div>
 
-    <!-- MAIN ENGINE WRAPPER -->
-    <div class="w-full max-w-md md:max-w-xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5">
+    <!-- MAIN ENGINE WRAPPER (Diperluas menjadi max-w-5xl untuk kenyamanan view Desktop) -->
+    <div class="w-full max-w-md md:max-w-5xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5">
         
         <!-- ================= LAYAR LOGIN ================= -->
         <div id="view-login" class="flex-col flex-1 p-8 justify-center items-center relative z-40">
@@ -70,7 +70,7 @@
             </div>
         </div>
 
-        <!-- ================= LAYAR LOBBY (VARY & ENHANCE LEVEL 2: ASYMMETRIC BENTO GRID) ================= -->
+        <!-- ================= LAYAR LOBBY (VARY & ENHANCE LEVEL 2: DESKTOP OPTIMIZED BENTO WRAPPER) ================= -->
         <div id="view-lobby" class="flex-col min-h-screen bg-appbg relative">
             
             <!-- PREMIUM STICKY NAVBAR -->
@@ -92,55 +92,56 @@
                     <span class="text-[9px] font-bold text-appneon uppercase tracking-wider bg-appneon/10 px-2.5 py-1 rounded-full border border-appneon/20">Active Session</span>
                 </div>
                 
-                <!-- ASYMMETRIC BENTO GRID LAYOUT OPTIMIZED FOR MICRO-SPACING -->
-                <div class="grid grid-cols-2 gap-3.5">
+                <!-- 12-COLUMN ASYMMETRIC BENTO GRID (Sangat presisi di desktop maupun layar besar tablet) -->
+                <div class="grid grid-cols-2 md:grid-cols-12 gap-4">
                     
-                    <!-- Box 1: Input Operasional (Large Block - High Priority CTA) -->
-                    <button onclick="goTo('input.html')" class="col-span-2 bg-appcard border border-white/5 p-6 rounded-3xl flex items-center justify-between btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-32 text-left">
+                    <!-- Box 1: Input Operasional (Desktop: Memakan 8 Column / Kiri Atas) -->
+                    <button onclick="goTo('input.html')" class="col-span-2 md:col-span-8 bg-appcard border border-white/5 p-6 rounded-3xl flex items-center justify-between btn-tactile hover:border-appneon/30 transition-all group relative overflow-hidden h-36 text-left">
                         <div class="space-y-2 relative z-10">
-                            <span class="text-xs font-black text-white uppercase tracking-wider block">Input Operasional</span>
-                            <span class="text-[10px] text-gray-400 font-medium block max-w-[200px] normal-case leading-tight">Pencatatan data logistik dan suplai harian produksi otomatis.</span>
+                            <span class="text-xs md:text-sm font-black text-white uppercase tracking-wider block">Input Operasional</span>
+                            <span class="text-[10px] md:text-xs text-gray-400 font-medium block max-w-md normal-case leading-tight">Pencatatan data logistik, sirkulasi stok, dan suplai harian produksi outlet otomatis.</span>
                         </div>
-                        <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300 shrink-0">
+                        <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300 shrink-0 ml-4">
                             <i class="fa-solid fa-plus text-base"></i>
                         </div>
                     </button>
                     
-                    <!-- Box 2: Analytic & QC (Medium Square Block) -->
-                    <button onclick="goTo('analytic.html')" class="bg-appcard border border-white/5 p-5 rounded-3xl flex flex-col items-start justify-between btn-tactile hover:border-appneon/30 transition-all group h-40 text-left">
+                    <!-- Box 2: Analytic & QC (Desktop: Memakan 4 Column / Kanan Atas) -->
+                    <button onclick="goTo('analytic.html')" class="col-span-1 md:col-span-4 bg-appcard border border-white/5 p-6 rounded-3xl flex flex-col items-start justify-between btn-tactile hover:border-appneon/30 transition-all group h-36 text-left">
                         <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
                             <i class="fa-solid fa-chart-simple text-sm"></i>
                         </div>
                         <div class="space-y-1">
-                            <span class="text-[11px] font-black text-white uppercase tracking-wider block">Analytic & QC</span>
-                            <span class="text-[9px] text-gray-400 font-medium block normal-case leading-none">Monitoring kualitas pasokan.</span>
+                            <span class="text-[11px] md:text-xs font-black text-white uppercase tracking-wider block">Analytic & QC</span>
+                            <span class="text-[9px] md:text-[10px] text-gray-400 font-medium block normal-case leading-tight">Monitoring kualitas pasokan secara berkala.</span>
                         </div>
                     </button>
 
-                    <!-- Box 3: Database History (Medium Square Block) -->
-                    <button onclick="goTo('data.html')" class="bg-appcard border border-white/5 p-5 rounded-3xl flex flex-col items-start justify-between btn-tactile hover:border-appneon/30 transition-all group h-40 text-left">
+                    <!-- Box 3: Database History (Desktop: Memakan 4 Column / Kiri Bawah) -->
+                    <button onclick="goTo('data.html')" class="col-span-1 md:col-span-4 bg-appcard border border-white/5 p-6 rounded-3xl flex flex-col items-start justify-between btn-tactile hover:border-appneon/30 transition-all group h-36 text-left">
                         <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
                             <i class="fa-solid fa-database text-sm"></i>
                         </div>
                         <div class="space-y-1">
-                            <span class="text-[11px] font-black text-white uppercase tracking-wider block">Database History</span>
-                            <span class="text-[9px] text-gray-400 font-medium block normal-case leading-none">Eksplorasi riwayat logs arsip.</span>
+                            <span class="text-[11px] md:text-xs font-black text-white uppercase tracking-wider block">Database History</span>
+                            <span class="text-[9px] md:text-[10px] text-gray-400 font-medium block normal-case leading-tight">Eksplorasi riwayat logs arsip data.</span>
                         </div>
                     </button>
 
-                    <!-- Box 4: Cetak Laporan (Wide Banner Block - Secondary Priority) -->
-                    <button onclick="goTo('report.html')" class="col-span-2 bg-appcard border border-white/5 p-5 rounded-3xl flex items-center justify-between btn-tactile hover:border-appneon/30 transition-all group h-20 text-left">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300">
-                                <i class="fa-solid fa-file-pdf text-sm"></i>
+                    <!-- Box 4: Cetak Laporan (Desktop: Memakan 8 Column / Kanan Bawah) -->
+                    <button onclick="goTo('report.html')" class="col-span-2 md:col-span-8 bg-appcard border border-white/5 p-6 rounded-3xl flex items-center justify-between btn-tactile hover:border-appneon/30 transition-all group h-36 text-left">
+                        <div class="flex items-center gap-5">
+                            <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center text-white group-hover:bg-appneon group-hover:text-black transition-all duration-300 shrink-0">
+                                <i class="fa-solid fa-file-pdf text-base"></i>
                             </div>
                             <div>
-                                <span class="text-[11px] font-black text-white uppercase tracking-wider block">Cetak Laporan</span>
-                                <span class="text-[9px] text-gray-400 font-medium block normal-case leading-none">Generasi berkas rekapitulasi performa outlet.</span>
+                                <span class="text-xs md:text-sm font-black text-white uppercase tracking-wider block mb-1">Cetak Laporan</span>
+                                <span class="text-[10px] md:text-xs text-gray-400 font-medium block normal-case leading-tight max-w-sm">Generasi berkas rekapitulasi performa manajemen logistik seluruh outlet regional.</span>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-gray-600 text-xs group-hover:text-appneon transition-colors mr-2"></i>
+                        <i class="fa-solid fa-chevron-right text-gray-600 text-sm group-hover:text-appneon transition-colors mr-2"></i>
                     </button>
+                    
                 </div>
             </div>
 
