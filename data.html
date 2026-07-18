@@ -1,4 +1,3 @@
-<!-- STREAMING_CHUNK: Setting up HTML layout and Google Fonts integration... -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -7,674 +6,183 @@
     <title>FFI - Database History</title>
     
     <link rel="icon" type="image/png" href="./LOGO FFI.png">
-    <!-- Google Fonts Inter for Geometric Sans Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
-        /* STREAMING_CHUNK: Setting up CSS custom utilities and design tokens... */
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        appbg: '#08090C',         // Ultra-dark background
-                        appcard: '#121319',       // Deep dark surfaces
-                        appcardlight: '#FFFFFF',  // Contrast white container
-                        appvolt: '#9EFF00',       // Volt/lime green accent color
-                        appgray: '#828594',       // Cool gray text
-                        appborder: '#1C1E26',     // Hairline border tone
-                        appred: '#FF453A',        // Custom system red
-                        appblue: '#0A84FF'        // System blue
+                        appbg: '#000000', appcard: '#1C1C1E', appinput: '#2C2C2E',
+                        appapplered: '#FF3B30', appappleblue: '#ADD8E6', appappleorange: '#FF9500', appgreen: '#34C759', appred: '#FF3B30'
                     },
-                    borderRadius: {
-                        'pillowy': '1.75rem',
-                        'bento': '2rem'
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', '-apple-system', 'sans-serif']
-                    }
+                    borderRadius: { '4xl': '2rem' },
+                    fontFamily: { 'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'], }
                 }
             }
         }
     </script>
     <style>
-        body { 
-            background-color: #08090C; 
-            color: #fff; 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-            overflow-x: hidden; 
-        }
+        body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
         
-        /* Smooth transition for inputs and buttons */
-        input { 
-            background-color: #121319; 
-            border: 1px solid #1C1E26; 
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
-            color: white; 
-            outline: none; 
-        }
-        input:focus { 
-            border-color: #9EFF00; 
-            background-color: #181A22; 
-            box-shadow: 0 0 15px rgba(158,255,0,0.15); 
-        }
+        input { background-color: #2C2C2E; border: 1.5px solid transparent; transition: all 0.25s; color: white; width: 100%; border-radius: 1.25rem; padding: 1.1rem 1.4rem; outline: none; font-weight: 600; font-size: 0.95rem; }
+        input:focus { border-color: #FF3B30; background-color: #1C1C1E; box-shadow: 0 0 15px rgba(255,59,48,0.25); }
         
-        .btn-tactile { 
-            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1); 
-            cursor: pointer; 
-        }
-        .btn-tactile:active { 
-            transform: scale(0.96); 
-            opacity: 0.9; 
-        }
+        .btn-tactile { transition: transform 0.1s; cursor: pointer; }
+        .btn-tactile:active { transform: scale(0.96); }
         
-        /* Custom Toast and modal placement animation */
-        #toast { 
-            transform: translate(-50%, -150%); 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-        }
-        .toast-show { 
-            transform: translate(-50%, 0) !important; 
-        }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.45s ease-out, opacity 0.35s; opacity: 0; }
+        .accordion-expanded { max-height: 800px; opacity: 1; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; margin-top: 0.75rem; }
         
-        /* Shimmer Loading Animation */
-        .skeleton-box { 
-            position: relative; 
-            overflow: hidden; 
-            background-color: #121319; 
-        }
-        .skeleton-box::after { 
-            content: ""; 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent); 
-            animation: shimmer 1.5s infinite; 
-        }
-        @keyframes shimmer { 
-            0% { transform: translateX(-100%); } 
-            100% { transform: translateX(100%); } 
-        }
+        #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .toast-show { transform: translateY(0) !important; }
         
-        @keyframes fadeInUp { 
-            0% { opacity: 0; transform: translateY(12px); } 
-            100% { opacity: 1; transform: translateY(0); } 
-        }
-        .animate-fade { 
-            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
-        }
+        .skeleton-box { position: relative; overflow: hidden; background-color: #1C1C1E; }
+        .skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent); animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeInUp 0.4s ease-out forwards; }
     </style>
 </head>
-<body class="bg-appbg text-slate-100 min-h-screen">
+<body class="flex justify-center antialiased">
 
-    <!-- TOAST (Apple-style Notification Banner) -->
-    <div id="toast" class="fixed top-6 left-1/2 z-[100] px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none border border-appborder bg-appcard/90 text-white shadow-2xl backdrop-blur-xl transition-all duration-300">
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-appcard border-2 border-appapplered text-white px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] pointer-events-none shadow-[0_0_15px_rgba(0,0,0,0.5)]">
         <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
     </div>
 
-    <!-- CUSTOM CONFIRM DIALOG (Replacing browser confirm Window) -->
-    <div id="confirm-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[150] hidden items-center justify-center p-4">
-        <div class="bg-appcard border border-appborder rounded-[2rem] w-full max-w-sm p-6 space-y-6 shadow-2xl scale-95 transition-transform duration-300">
-            <div class="text-center space-y-3">
-                <div class="w-12 h-12 bg-appred/10 rounded-2xl flex items-center justify-center text-appred mx-auto">
-                    <i class="fa-solid fa-triangle-exclamation text-xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white">Batalkan Transaksi PO?</h3>
-                <p class="text-xs text-appgray leading-relaxed" id="confirm-msg">Apakah Anda yakin ingin membatalkan/void transaksi PO ini?</p>
-            </div>
-            <div class="flex gap-3">
-                <button id="confirm-cancel-btn" class="flex-1 bg-white/5 hover:bg-white/10 border border-white/5 py-3 rounded-xl text-xs font-semibold tracking-wider transition-colors btn-tactile">Batal</button>
-                <button id="confirm-ok-btn" class="flex-1 bg-appred hover:bg-appred/80 py-3 rounded-xl text-xs font-semibold tracking-wider text-white transition-colors btn-tactile shadow-[0_4px_12px_rgba(255,69,58,0.3)]">Ya, Void PO</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTAINER -->
-    <!-- STREAMING_CHUNK: Rendering the layout structure and primary layout container... -->
-    <div class="w-full max-w-7xl min-h-screen relative flex flex-col mx-auto px-4 md:px-8 py-6 pb-24">
+    <div class="w-full max-w-md md:max-w-3xl bg-appbg min-h-screen relative flex flex-col shadow-2xl mx-auto md:border-x border-white/5 pb-20">
         
-        <!-- HEADER BAR (Salesforce Vibe) -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div class="flex items-center gap-3">
-                <button onclick="window.location.href='index.html'" class="w-10 h-10 rounded-full border border-appborder flex items-center justify-center text-appgray hover:text-white transition-colors btn-tactile">
-                    <i class="fa-solid fa-arrow-left text-sm"></i>
+        <!-- Header Nav -->
+        <div class="px-6 py-5 sticky top-0 bg-[#000000]/92 backdrop-blur-xl z-20 flex justify-between items-center border-b border-white/5">
+            <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-transform active:scale-95 text-xs flex items-center gap-2 font-extrabold tracking-widest">
+                <i class="fa-solid fa-chevron-left"></i> LOBBY
+            </button>
+            <h2 class="text-sm font-black text-appgreen tracking-widest uppercase">Database Log</h2>
+            <div class="w-16"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="p-6 md:p-10 space-y-6 animate-fade">
+            <!-- Search & Sync -->
+            <div class="flex gap-3 items-stretch">
+                <input type="text" id="search-po" placeholder="Cari ID PO atau DC Gudang..." onkeyup="filterLogLocal()">
+                <button type="button" onclick="loadLogPO()" id="btn-sync-log" class="bg-appgreen text-black w-14 md:w-16 rounded-2xl flex justify-center items-center btn-tactile shadow-[0_0_15px_rgba(52,199,89,0.2)]">
+                    <i class="fa-solid fa-rotate-right text-lg" id="sync-icon"></i>
                 </button>
-                <div>
-                    <div class="flex items-center gap-2 text-[10px] tracking-widest text-appgray uppercase font-bold">
-                        <span>FamilyFood SC</span>
-                        <span>•</span>
-                        <span class="text-appvolt">Database Log</span>
-                    </div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight mt-0.5">Invoices Log</h1>
-                </div>
             </div>
 
-            <!-- Custom Center Tab Header Replicating image_d43522.jpg -->
-            <div class="bg-appcard border border-appborder p-1.5 rounded-full flex items-center gap-1 w-full md:w-auto overflow-x-auto">
-                <span class="px-4 py-2 rounded-full text-xs font-semibold text-appgray hover:text-white transition-colors whitespace-nowrap">Overview</span>
-                <span class="px-4 py-2 rounded-full text-xs font-bold bg-appvolt text-black flex items-center gap-1.5 shadow-[0_0_12px_rgba(158,255,0,0.3)] whitespace-nowrap">
-                    <span class="w-1.5 h-1.5 rounded-full bg-black"></span> Database
-                </span>
-                <span class="px-4 py-2 rounded-full text-xs font-semibold text-appgray hover:text-white transition-colors whitespace-nowrap">QC Logs</span>
-                <span class="px-4 py-2 rounded-full text-xs font-semibold text-appgray hover:text-white transition-colors whitespace-nowrap">System Settings</span>
+            <!-- Container List Kartu Log -->
+            <div id="log-container" class="grid grid-cols-1 gap-4 pb-10">
+                <!-- Diisi otomatis oleh JavaScript -->
             </div>
-        </header>
-
-        <!-- STREAMING_CHUNK: Styling the bento grid KPI widgets... -->
-        <!-- BENTO GRID SYSTEM (Top Section) -->
-        <section class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-8 animate-fade">
-            <!-- Box 1: Total PO Ctn -->
-            <div class="md:col-span-4 bg-appcard border border-appborder rounded-bento p-6 flex flex-col justify-between min-h-[180px]">
-                <div>
-                    <p class="text-xs font-semibold text-appgray uppercase tracking-wider">Total PO Volume</p>
-                    <h3 class="text-3xl font-extrabold text-white mt-2" id="kpi-total-po">0 <span class="text-xs text-appgray font-medium">ctn</span></h3>
-                </div>
-                <!-- Mini simulated chart representing timeline from reference image -->
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2 text-[10px] text-appgray font-semibold">
-                        <span class="text-appvolt">Sep</span>
-                        <span>•</span>
-                        <span>Oct</span>
-                        <span>•</span>
-                        <span>Nov</span>
-                        <span>•</span>
-                        <span>Dec</span>
-                    </div>
-                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex gap-0.5">
-                        <div class="h-full w-1/4 bg-appvolt/40"></div>
-                        <div class="h-full w-1/3 bg-appvolt/70"></div>
-                        <div class="h-full w-1/2 bg-appvolt shadow-[0_0_8px_rgba(158,255,0,0.5)]"></div>
-                        <div class="h-full w-1/6 bg-white/10"></div>
-                    </div>
-                    <!-- User Avatars Sync Tracker -->
-                    <div class="flex -space-x-2 overflow-hidden">
-                        <img class="inline-block h-6 w-6 rounded-full ring-2 ring-appcard" src="https://images.unsplash.com/photo-1491528323818-fdd1faba62cc?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Avatar">
-                        <img class="inline-block h-6 w-6 rounded-full ring-2 ring-appcard" src="https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Avatar">
-                        <img class="inline-block h-6 w-6 rounded-full ring-2 ring-appcard" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Avatar">
-                        <div class="h-6 w-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[8px] font-bold text-appvolt tracking-tight">+5</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Box 2: Avg supply GAP -->
-            <div class="md:col-span-4 bg-appcard border border-appborder rounded-bento p-6 flex flex-col justify-between min-h-[180px]">
-                <div>
-                    <p class="text-xs font-semibold text-appgray uppercase tracking-wider">Average Supply GAP</p>
-                    <h3 class="text-3xl font-extrabold text-white mt-2" id="kpi-avg-gap">0%</h3>
-                </div>
-                <!-- Detail description -->
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center text-xs text-appgray">
-                        <span>Database Health</span>
-                        <span class="text-appvolt font-bold">Excellent</span>
-                    </div>
-                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-appvolt w-[92%]"></div>
-                    </div>
-                    <p class="text-[10px] text-appgray leading-relaxed">Target supply accuracy set at 85% average margin[cite: image_d43522.jpg].</p>
-                </div>
-            </div>
-
-            <!-- Box 3: Sync nodes status (Replicating Credit card widget from image) -->
-            <div class="md:col-span-4 bg-appcard border border-appborder rounded-bento p-6 flex flex-col justify-between min-h-[180px]">
-                <div>
-                    <p class="text-xs font-semibold text-appgray uppercase tracking-wider">Database Nodes Sync</p>
-                    <h3 class="text-3xl font-extrabold text-white mt-2">Active <span class="text-xs text-appvolt font-bold">Normal</span></h3>
-                </div>
-                <!-- Inline nodes visualization card stack -->
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-white/5 border border-white/5 p-2 rounded-xl text-center">
-                        <p class="text-[8px] text-appgray font-medium">Node 1</p>
-                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-appvolt mt-1 shadow-[0_0_6px_#9EFF00]"></span>
-                    </div>
-                    <!-- Node stripe visual green look from reference -->
-                    <div class="bg-appvolt border border-appvolt/10 p-2 rounded-xl text-center text-black font-bold">
-                        <p class="text-[8px] text-black/60">Node 2</p>
-                        <p class="text-[9px] mt-0.5 uppercase tracking-wider">Stripe</p>
-                    </div>
-                    <div class="bg-white/5 border border-white/5 p-2 rounded-xl text-center">
-                        <p class="text-[8px] text-appgray font-medium">Backup</p>
-                        <p class="text-[9px] text-appvolt mt-0.5 font-bold">Secure</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- STREAMING_CHUNK: Constructing the responsive navigation and toolbar... -->
-        <!-- SEARCH & ACTIVE FILTER SECTION -->
-        <section class="mb-8 animate-fade" style="animation-delay: 100ms;">
-            <div class="flex flex-col md:flex-row gap-4 items-stretch justify-between">
-                <!-- Capsule styled search input -->
-                <div class="relative flex-1">
-                    <i class="fa-solid fa-magnifying-glass absolute left-5 top-1/2 -translate-y-1/2 text-appgray text-sm"></i>
-                    <input type="text" id="search-po" placeholder="Cari ID PO atau nama DC Gudang..." onkeyup="filterLogLocal()" class="w-full pl-12 pr-6 py-4 rounded-full bg-appcard border border-appborder text-sm font-semibold">
-                </div>
-                
-                <div class="flex items-center gap-3">
-                    <!-- Refresh database CTA -->
-                    <button type="button" onclick="loadLogPO()" id="btn-sync-log" class="bg-appcard border border-appborder hover:border-appvolt/30 text-white hover:text-appvolt px-6 py-4 rounded-full flex items-center justify-center gap-3 btn-tactile text-xs font-bold tracking-wider">
-                        <i class="fa-solid fa-rotate-right text-sm" id="sync-icon"></i> RE-SYNC SYSTEM
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- STREAMING_CHUNK: Implementing the dual-panel list and details layout... -->
-        <!-- CORE DUAL PANEL CONTAINER -->
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade" style="animation-delay: 200ms;">
-            
-            <!-- LEFT CONTAINER: White Invoice list container (Exactly like reference visual cut-out) -->
-            <div class="lg:col-span-5 bg-appcardlight text-black rounded-[2.5rem] p-6 shadow-2xl space-y-6">
-                <!-- Segment filter pills inside the white box -->
-                <div class="flex items-center justify-between border-b border-gray-100 pb-4">
-                    <div class="flex items-center gap-1.5">
-                        <span class="px-3 py-1.5 rounded-full text-[10px] font-extrabold bg-slate-900 text-white tracking-wide uppercase">All PO Logs</span>
-                        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold text-gray-500 hover:bg-gray-100 transition-all uppercase">Draft</span>
-                        <!-- Status indicator badge with green dot -->
-                        <span class="px-3 py-1.5 rounded-full text-[10px] font-bold bg-appvolt/20 text-slate-900 flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-slate-950"></span> Active
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Scrolling container for PO Cards -->
-                <div id="log-container" class="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                    <!-- Loaded dynamically via JavaScript -->
-                    <div class="skeleton-box rounded-[1.5rem] h-20 w-full"></div>
-                    <div class="skeleton-box rounded-[1.5rem] h-20 w-full"></div>
-                    <div class="skeleton-box rounded-[1.5rem] h-20 w-full"></div>
-                </div>
-            </div>
-
-            <!-- RIGHT CONTAINER: Selected PO Detail (Exactly like right dark card detail screen) -->
-            <div class="lg:col-span-7 bg-appcard border border-appborder rounded-[2.5rem] p-6 text-white min-h-[500px] flex flex-col justify-between relative" id="detail-panel">
-                <!-- Initial view when no log is selected -->
-                <div id="detail-empty-state" class="flex flex-col items-center justify-center my-auto py-20 text-center space-y-4">
-                    <div class="w-16 h-16 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-appvolt/50">
-                        <i class="fa-solid fa-folder-open text-2xl"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-sm text-white">Detail Transaksi PO</h4>
-                        <p class="text-xs text-appgray max-w-xs mt-1">Silakan pilih salah satu data PO di sebelah kiri untuk melihat rincian pemenuhan secara real-time.</p>
-                    </div>
-                </div>
-
-                <!-- Structured invoice layout to be rendered dynamically -->
-                <div id="detail-content" class="hidden flex-col justify-between h-full space-y-6">
-                    <!-- Dynamic layout inserted by JS -->
-                </div>
-            </div>
-
-        </section>
-    </div>
-
-    <!-- MOBILE BOTTOM DRAWER FOR DETAIL -->
-    <div id="mobile-detail-drawer" class="fixed inset-x-0 bottom-0 z-50 bg-appcard border-t border-appborder rounded-t-[2.5rem] p-6 text-white translate-y-full transition-transform duration-300 shadow-2xl lg:hidden max-h-[85vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-6 border-b border-appborder pb-4">
-            <h3 class="font-bold text-lg text-white">Rincian Transaksi</h3>
-            <button onclick="closeMobileDetail()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-appgray"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="mobile-detail-content" class="space-y-6">
-            <!-- Dynamic layout cloned from desktop detail -->
         </div>
     </div>
 
-    <!-- STREAMING_CHUNK: Initializing state management and webhook functions... -->
     <script>
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
         let activeLogData = [];
-        let selectedPOId = null;
 
-        // On document loaded
         document.addEventListener('DOMContentLoaded', () => {
-            if(!localStorage.getItem('ffi_user')) { 
-                window.location.href = 'index.html'; 
-                return; 
-            }
+            if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
             setTimeout(() => { loadLogPO(); }, 100);
         });
 
-        // Toast trigger helper
         function showToast(msg, isError = false) {
-            const t = document.getElementById('toast'); 
-            document.getElementById('toast-msg').innerText = msg; 
-            document.getElementById('toast-icon').innerText = isError ? '⚠️' : '✅';
-            
-            t.className = `fixed top-6 left-1/2 z-[100] px-6 py-3.5 rounded-2xl font-semibold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border backdrop-blur-xl shadow-2xl ${isError ? 'bg-[#2C1414]/95 border-appred/30 text-appred' : 'bg-appcard/95 border-appborder text-white'}`;
-            t.classList.add('toast-show'); 
-            setTimeout(() => t.classList.remove('toast-show'), 3000);
+            const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
+            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white'}`;
+            t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
         }
 
-        // Custom Confirm Dialog function (Promise-based, matching look)
-        function showCustomConfirm(msg) {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('confirm-modal');
-                const msgEl = document.getElementById('confirm-msg');
-                const cancelBtn = document.getElementById('confirm-cancel-btn');
-                const okBtn = document.getElementById('confirm-ok-btn');
-                
-                msgEl.innerText = msg;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                
-                function cleanUp(result) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                    cancelBtn.onclick = null;
-                    okBtn.onclick = null;
-                    resolve(result);
-                }
-                
-                cancelBtn.onclick = () => cleanUp(false);
-                okBtn.onclick = () => cleanUp(true);
-            });
-        }
-
-        // Custom AJAX webhook fetch
+        // PERBAIKAN: Mengembalikan fungsi sendApi khusus untuk data.html
         async function sendApi(payload, btnElement = null, originalText = "") {
-            if(btnElement) { 
-                btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-sm"></i>`; 
-                btnElement.classList.add('opacity-70', 'pointer-events-none'); 
-            }
+            if(btnElement) { btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btnElement.classList.add('opacity-50', 'pointer-events-none'); }
             try {
-                const res = await fetch(WEBHOOK_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(payload) 
-                });
-                const txt = await res.text(); 
-                let data; 
-                try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
-                if(btnElement) { 
-                    btnElement.innerHTML = originalText; 
-                    btnElement.classList.remove('opacity-70', 'pointer-events-none'); 
-                }
+                const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
+                if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
                 return Array.isArray(data) ? data[0] : data;
-            } catch(e) { 
-                if(btnElement) { 
-                    btnElement.innerHTML = originalText; 
-                    btnElement.classList.remove('opacity-70', 'pointer-events-none'); 
-                } 
-                return null; 
-            }
+            } catch(e) { if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); } return null; }
         }
 
-        // Fetch logs data
         async function loadLogPO() {
             const btn = document.getElementById('btn-sync-log');
             const cont = document.getElementById('log-container'); 
-            if(cont) {
-                cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-[1.5rem] h-20 w-full mb-2"></div>`).join('');
-            }
+            if(cont) cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-3xl h-24 w-full mb-2"></div>`).join('');
             
-            const res = await sendApi({ action: "load_admin" }, btn, `<i class="fa-solid fa-rotate-right text-xs"></i> RE-SYNC SYSTEM`);
+            // Pemanggilan Payload Action Load Admin
+            const res = await sendApi({ action: "load_admin" }, btn, `<i class="fa-solid fa-rotate-right text-lg"></i>`);
             
             if (res && res.status === "success") {
                 activeLogData = res.data || [];
                 renderLogs(activeLogData);
-                calculateKPIs(activeLogData);
             } else { 
-                showToast("Gagal mengambil data terbaru", true); 
-                cont.innerHTML = `<p class="text-center italic text-gray-400 text-xs py-10">Gagal memuat data...</p>`;
+                showToast("Gagal mengambil data", true); 
             }
         }
 
-        // Calculate and update top bento statistics
-        function calculateKPIs(data) {
-            let totalPOVolume = 0;
-            let totalSupplied = 0;
-            let poCount = 0;
-
-            data.forEach(item => {
-                const isBatal = String(item["PO NKA"]).includes("BATAL") || (Number(item["TOTAL PO ctn"]||0) === 0 && (Number(item["Qty Terpenuhi (Kirim)"]||0) === 0));
-                if(!isBatal) {
-                    const poQty = Number(item["TOTAL PO ctn"]) || 0;
-                    const suppliedQty = Number(item["Qty Terpenuhi (Kirim)"]) || (Number(item["NKA"]||0) + Number(item["NDLH"]||0) + Number(item["NRD"]||0) + Number(item["NARR"]||0) + Number(item["NKACH"]||0));
-                    totalPOVolume += poQty;
-                    totalSupplied += suppliedQty;
-                    poCount++;
-                }
-            });
-
-            document.getElementById('kpi-total-po').innerHTML = `${totalPOVolume.toLocaleString('id-ID')} <span class="text-xs text-appgray font-semibold">ctn</span>`;
-            
-            const rawGapPercentage = totalPOVolume > 0 ? ((totalPOVolume - totalSupplied) / totalPOVolume) * 100 : 0;
-            const absoluteGap = Math.abs(rawGapPercentage).toFixed(1);
-            document.getElementById('kpi-avg-gap').innerText = `${absoluteGap}%`;
-        }
-
-        // Client-side search and filtering
         function filterLogLocal() { 
             const q = document.getElementById('search-po').value.toLowerCase(); 
-            const filtered = activeLogData.filter(i => (i.ID && i.ID.toLowerCase().includes(q)) || (i.DC && i.DC.toLowerCase().includes(q)));
-            renderLogs(filtered); 
+            renderLogs(activeLogData.filter(i => (i.ID && i.ID.toLowerCase().includes(q)) || (i.DC && i.DC.toLowerCase().includes(q)))); 
         }
 
-        // Render left column of log list (Clean white container view)
         function renderLogs(data) {
-            const cont = document.getElementById('log-container'); 
-            if(!cont) return; 
-            cont.innerHTML = '';
-            
-            if(!data.length) { 
-                cont.innerHTML = `
-                    <div class="text-center py-12 space-y-2">
-                        <p class="text-xs text-gray-400 font-bold">Tidak ada riwayat log</p>
-                        <p class="text-[10px] text-gray-400 max-w-xs mx-auto">Sistem tidak mendeteksi transaksi atau hasil filter kosong.</p>
-                    </div>`; 
-                return; 
-            }
+            const cont = document.getElementById('log-container'); if(!cont) return; cont.innerHTML = '';
+            if(!data.length) { cont.innerHTML = `<p class="text-center italic opacity-30 text-sm py-10">Tidak ada riwayat data...</p>`; return; }
 
             data.forEach((item, idx) => {
                 if(!item.ID) return;
-                
                 const isBatal = String(item["PO NKA"]).includes("BATAL") || (Number(item["TOTAL PO ctn"]||0) === 0 && (Number(item["Qty Terpenuhi (Kirim)"]||0) === 0));
                 const poQty = Number(item["TOTAL PO ctn"]) || 0;
                 const salesQty = Number(item["Qty Terpenuhi (Kirim)"]) || (Number(item["NKA"]||0) + Number(item["NDLH"]||0) + Number(item["NRD"]||0) + Number(item["NARR"]||0) + Number(item["NKACH"]||0));
+                const batchInfo = item.BATCHES || item.batches || "-";
 
-                let badgeColor = "bg-gray-100 text-gray-600";
-                let badgeText = "Viewed";
-                let textStyle = "text-slate-950";
-                
-                if (isBatal) { 
-                    badgeColor = "bg-red-50 text-red-600"; 
-                    badgeText = "Voided"; 
-                    textStyle = "text-gray-400 line-through";
-                } else if (salesQty >= (poQty * 0.85)) { 
-                    badgeColor = "bg-green-50 text-green-700"; 
-                    badgeText = "Synced"; 
-                } else if (salesQty > 0) { 
-                    badgeColor = "bg-amber-50 text-amber-600"; 
-                    badgeText = "Partial"; 
-                }
-
-                // Selected styling for active desktop card
-                const isSelected = selectedPOId === item.ID ? 'ring-2 ring-slate-900 bg-gray-50' : 'hover:bg-gray-50/70';
+                let border = "border-white/5", text = "text-appred", icon = "fa-circle-xmark", cardBg = "bg-appcard", badge = "";
+                if (isBatal) { border = "border-appred/40"; cardBg = "bg-[#1A0505]"; icon = "fa-ban"; badge = `<div class="absolute top-3 right-3 bg-appred text-white text-[8px] font-black px-2 py-0.5 rounded">VOID</div>`; }
+                else if (salesQty >= (poQty * 0.85)) { border = "border-appgreen/30"; text = "text-appgreen"; icon = "fa-circle-check"; }
+                else if (salesQty > 0) { border = "border-appappleorange/30"; text = "text-appappleorange"; icon = "fa-clock-rotate-left"; }
 
                 cont.innerHTML += `
-                    <div onclick="selectPO('${item.ID}')" class="p-4 rounded-2xl border border-gray-100 flex items-center justify-between cursor-pointer transition-all ${isSelected} animate-fade btn-tactile" style="animation-delay:${idx*20}ms; opacity:0">
-                        <div class="flex items-center gap-4 min-w-0">
-                            <!-- Left icon profile circle simulator -->
-                            <div class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white text-[11px] font-black shrink-0 shadow-sm">
-                                ${item.ID.substring(0, 2)}
-                            </div>
-                            <div class="min-w-0">
-                                <h4 class="font-extrabold text-sm tracking-tight ${textStyle}">${item.ID}</h4>
-                                <p class="text-[10px] text-gray-400 font-bold tracking-tight mt-0.5 truncate">${item.DC || 'Main Warehouse'}</p>
-                            </div>
+                <div class="${cardBg} rounded-3xl border ${border} overflow-hidden relative animate-fade" style="animation-delay:${idx*20}ms; opacity:0">
+                    ${badge}
+                    <div class="p-5 flex items-center justify-between cursor-pointer btn-tactile" onclick="toggleCard('${item.ID}')">
+                        <div class="flex items-center gap-4 w-2/3">
+                            <div class="w-10 h-10 rounded-xl bg-black/40 flex items-center justify-center border border-white/5 ${isBatal?'text-appred':text}"><i class="fa-solid ${icon} text-lg"></i></div>
+                            <div class="min-w-0"><h4 class="font-black text-sm uppercase truncate ${isBatal?'text-gray-500':''}">${item.ID}</h4><p class="text-[10px] text-gray-500 font-bold uppercase mt-1 truncate">${item.DC} • ${item["Tanggal PO"]}</p></div>
                         </div>
-                        <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
-                            <span class="px-2 py-0.5 text-[8px] font-extrabold rounded-full ${badgeColor}">${badgeText}</span>
-                            <p class="text-xs font-black text-slate-800">${salesQty.toLocaleString('id-ID')} <span class="text-[9px] text-gray-400 font-medium">ctn</span></p>
-                        </div>
-                    </div>`;
-            });
-
-            // Automatically open/render detail of first available item if not selected
-            if(data.length && !selectedPOId && window.innerWidth >= 1024) {
-                selectPO(data[0].ID);
-            }
-        }
-
-        // View Detail selection trigger
-        function selectPO(id) {
-            selectedPOId = id;
-            
-            // Highlight selected in left list
-            const searchVal = document.getElementById('search-po').value.toLowerCase();
-            const currentData = activeLogData.filter(i => (i.ID && i.ID.toLowerCase().includes(searchVal)) || (i.DC && i.DC.toLowerCase().includes(searchVal)));
-            renderLogs(currentData);
-
-            const item = activeLogData.find(i => i.ID === id);
-            if(!item) return;
-
-            const isBatal = String(item["PO NKA"]).includes("BATAL") || (Number(item["TOTAL PO ctn"]||0) === 0 && (Number(item["Qty Terpenuhi (Kirim)"]||0) === 0));
-            const poQty = Number(item["TOTAL PO ctn"]) || 0;
-            const salesQty = Number(item["Qty Terpenuhi (Kirim)"]) || (Number(item["NKA"]||0) + Number(item["NDLH"]||0) + Number(item["NRD"]||0) + Number(item["NARR"]||0) + Number(item["NKACH"]||0));
-            const batchInfo = item.BATCHES || item.batches || "Unassigned Batch Tag";
-
-            // Details view UI template matching invoice style right layout
-            const contentHTML = `
-                <!-- Invoice Head details -->
-                <div class="space-y-6">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] uppercase font-bold tracking-widest text-appgray">Invoice Details</span>
-                            <h2 class="text-2xl font-black text-white mt-1"># ${item.ID}</h2>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-[10px] font-extrabold ${isBatal ? 'bg-appred/20 text-appred' : 'bg-appvolt/20 text-appvolt'} uppercase tracking-wide">
-                            ${isBatal ? 'Void' : 'Synced'}
-                        </span>
+                        <div class="text-right"><p class="text-[8px] text-gray-600 uppercase font-black tracking-widest mb-0.5">PO / SALES</p><p class="text-sm font-black ${isBatal?'text-gray-600':text}">${poQty} / ${salesQty}</p></div>
                     </div>
-
-                    <!-- Client Profile Section -->
-                    <div class="grid grid-cols-2 gap-4 border-y border-appborder py-4">
-                        <div>
-                            <p class="text-[9px] uppercase font-extrabold tracking-widest text-appgray mb-1">Company Unit</p>
-                            <span class="text-sm font-extrabold text-white">BlueRock Logistics</span>
+                    <div id="det-${item.ID}" class="accordion-content bg-black/40 px-5 pb-5 pt-0">
+                        <div class="bg-black/60 p-2.5 rounded-xl border border-white/5 mb-3 text-center"><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Tag Batch Terikat</p><p class="text-[10px] text-appappleblue font-black tracking-wider uppercase">${batchInfo}</p></div>
+                        <div class="space-y-1.5 text-[10px] font-extrabold uppercase">
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NKA</span><span>${item["PO NKA"]||0} ➔ <span class="text-appappleblue">${item["NKA"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NDLH</span><span>${item["PO NDLH"]||0} ➔ <span class="text-appappleblue">${item["NDLH"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NRD</span><span>${item["PO NRD"]||0} ➔ <span class="text-appappleblue">${item["NRD"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NARR</span><span>${item["PO NARR"]||0} ➔ <span class="text-appappleblue">${item["NARR"]||0}</span></span></div>
+                            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NKACH</span><span>${item["PO NKACH"]||0} ➔ <span class="text-appgreen">${item["NKACH"]||0}</span></span></div>
                         </div>
-                        <div>
-                            <p class="text-[9px] uppercase font-extrabold tracking-widest text-appgray mb-1">Distribution Center</p>
-                            <span class="text-sm font-extrabold text-white truncate block">${item.DC || '-'}</span>
+                        <div class="flex justify-between items-center border-t border-white/5 pt-4 mt-4">
+                            <div><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">GAP Supply</p><p class="text-sm font-black ${item["GAP"]==0?'text-appgreen':'text-appred'}">${item["GAP"]||0} CTN</p></div>
+                            <button type="button" onclick="deletePO('${item.ID}')" class="bg-appred/10 text-appred border border-appred/20 font-extrabold text-[9px] py-2 px-4 rounded-xl btn-tactile hover:bg-appred hover:text-white ${isBatal?'hidden-tab':''}"><i class="fa-solid fa-trash mr-1.5"></i>BATAL PO</button>
                         </div>
                     </div>
-
-                    <!-- Micro Metrics Card Grid -->
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="bg-[#181A22] border border-appborder p-3.5 rounded-2xl">
-                            <p class="text-[8px] uppercase font-bold text-appgray">Target PO</p>
-                            <p class="text-lg font-black text-white mt-1">${poQty} <span class="text-[9px] text-appgray">ctn</span></p>
-                        </div>
-                        <div class="bg-[#181A22] border border-appborder p-3.5 rounded-2xl">
-                            <p class="text-[8px] uppercase font-bold text-appgray">Kirim Plan</p>
-                            <p class="text-lg font-black text-appvolt mt-1">${salesQty} <span class="text-[9px] text-appgray">ctn</span></p>
-                        </div>
-                        <div class="bg-[#181A22] border border-appborder p-3.5 rounded-2xl">
-                            <p class="text-[8px] uppercase font-bold text-appgray">Batch Tag</p>
-                            <p class="text-[10px] font-extrabold text-appblue truncate mt-2 uppercase tracking-wide">${batchInfo}</p>
-                        </div>
-                    </div>
-
-                    <!-- Breakdown Table list inside card -->
-                    <div class="space-y-2">
-                        <p class="text-[10px] uppercase font-extrabold tracking-widest text-appgray mb-2">Breakdown Pemenuhan Unit</p>
-                        <div class="space-y-2 text-xs font-semibold">
-                            <div class="flex justify-between items-center bg-white/5 py-2.5 px-4 rounded-xl border border-white/5">
-                                <span class="text-appgray">NKA</span>
-                                <span class="font-bold text-white">${item["PO NKA"]||0} <i class="fa-solid fa-arrow-right text-[10px] text-appgray mx-1.5"></i> <span class="text-appvolt">${item["NKA"]||0}</span></span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/5 py-2.5 px-4 rounded-xl border border-white/5">
-                                <span class="text-appgray">NDLH</span>
-                                <span class="font-bold text-white">${item["PO NDLH"]||0} <i class="fa-solid fa-arrow-right text-[10px] text-appgray mx-1.5"></i> <span class="text-appvolt">${item["NDLH"]||0}</span></span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/5 py-2.5 px-4 rounded-xl border border-white/5">
-                                <span class="text-appgray">NRD</span>
-                                <span class="font-bold text-white">${item["PO NRD"]||0} <i class="fa-solid fa-arrow-right text-[10px] text-appgray mx-1.5"></i> <span class="text-appvolt">${item["NRD"]||0}</span></span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/5 py-2.5 px-4 rounded-xl border border-white/5">
-                                <span class="text-appgray">NARR</span>
-                                <span class="font-bold text-white">${item["PO NARR"]||0} <i class="fa-solid fa-arrow-right text-[10px] text-appgray mx-1.5"></i> <span class="text-appvolt">${item["NARR"]||0}</span></span>
-                            </div>
-                            <div class="flex justify-between items-center bg-white/5 py-2.5 px-4 rounded-xl border border-white/5">
-                                <span class="text-appgray">NKACH</span>
-                                <span class="font-bold text-white">${item["PO NKACH"]||0} <i class="fa-solid fa-arrow-right text-[10px] text-appgray mx-1.5"></i> <span class="text-appvolt">${item["NKACH"]||0}</span></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Footer details with custom confirm void system -->
-                <div class="pt-6 border-t border-appborder mt-6 flex justify-between items-center gap-4">
-                    <div>
-                        <p class="text-[9px] uppercase font-extrabold tracking-widest text-appgray">GAP Supply</p>
-                        <h4 class="text-lg font-black ${item["GAP"] == 0 ? 'text-appvolt' : 'text-appred'}">${item["GAP"]||0} CTN</h4>
-                    </div>
-                    
-                    ${!isBatal ? `
-                        <button type="button" onclick="deletePO('${item.ID}')" class="bg-appred/10 border border-appred/20 hover:bg-appred hover:text-white text-appred py-3 px-5 rounded-2xl text-xs font-bold tracking-wider btn-tactile">
-                            <i class="fa-solid fa-ban mr-1.5"></i> BATAL PO
-                        </button>
-                    ` : ''}
                 </div>`;
-
-            // For Desktop View
-            const deskContent = document.getElementById('detail-content');
-            const deskEmpty = document.getElementById('detail-empty-state');
-            if(deskContent && deskEmpty) {
-                deskEmpty.classList.add('hidden');
-                deskContent.innerHTML = contentHTML;
-                deskContent.classList.remove('hidden');
-                deskContent.classList.add('flex');
-            }
-
-            // For Mobile responsive view
-            if(window.innerWidth < 1024) {
-                const mobContent = document.getElementById('mobile-detail-content');
-                const drawer = document.getElementById('mobile-detail-drawer');
-                if(mobContent && drawer) {
-                    mobContent.innerHTML = contentHTML;
-                    drawer.classList.remove('translate-y-full');
-                }
-            }
+            });
         }
+        function toggleCard(id) { document.getElementById('det-' + id).classList.toggle('accordion-expanded'); }
 
-        function closeMobileDetail() {
-            const drawer = document.getElementById('mobile-detail-drawer');
-            if(drawer) {
-                drawer.classList.add('translate-y-full');
-            }
-        }
-
-        /* STREAMING_CHUNK: Injecting custom confirmation dialog and actions logic... */
-        // VOID/DELETE PO trigger
+        // Pemanggilan Payload Action Delete PO
         async function deletePO(id) {
-            closeMobileDetail();
-            // Using custom secure confirm dialog to prevent alerts
-            const ok = await showCustomConfirm(`Apakah Anda yakin ingin membatalkan/void transaksi PO: ${id}? Tindakan ini permanen.`);
-            if(!ok) return;
-
+            if(!confirm(`Apakah Anda yakin ingin membatalkan/void transaksi PO: ${id}?`)) return;
             const res = await sendApi({ action: "delete", id: id });
             if(res && res.status === "success") { 
                 showToast(`PO ${id} Berhasil Dibatalkan!`); 
-                selectedPOId = null;
-                // reset views
-                const deskContent = document.getElementById('detail-content');
-                const deskEmpty = document.getElementById('detail-empty-state');
-                if(deskContent && deskEmpty) {
-                    deskContent.classList.add('hidden');
-                    deskEmpty.classList.remove('hidden');
-                }
                 loadLogPO(); 
             } else { 
-                showToast("Gagal memproses pembatalan PO", true); 
+                showToast("Gagal void data", true); 
             }
         }
     </script>
 </body>
 </html>
-```eof
