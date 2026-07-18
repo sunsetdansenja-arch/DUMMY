@@ -3,37 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FFI - Analytic & QC</title>
+    <title>FFI - Cetak Laporan PDF</title>
+    
     <link rel="icon" type="image/png" href="./LOGO FFI.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <script>
-        tailwind.config = { 
-            theme: { 
-                extend: { 
-                    colors: { 
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
                         appbg: '#0F1115', 
                         appcard: '#15181E', 
                         appcardsec: '#1D212A',
-                        appaccent: '#9DFF00',
+                        appaccent: '#FF9F0A',
                         appcontrast: '#FFFFFF',
                         appborder: 'rgba(255, 255, 255, 0.05)',
                         appborderhover: 'rgba(255, 255, 255, 0.12)',
-                        appred: '#FF453A', 
-                        appgreen: '#32D74B',
-                        apporange: '#FF9F0A'
-                    }, 
+                        appinput: '#1D212A',
+                        appapplered: '#FF453A', 
+                        appappleblue: '#0A84FF', 
+                        appappleorange: '#FF9F0A', 
+                        appgreen: '#32D74B', 
+                        appred: '#FF453A'
+                    },
                     borderRadius: { 
                         '3xl': '1.25rem',
                         '4xl': '1.75rem',
                         '5xl': '2.25rem'
                     },
                     fontFamily: { 
-                        'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'] 
-                    } 
-                } 
-            } 
+                        'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'], 
+                    }
+                }
+            }
         }
     </script>
     <style>
@@ -44,31 +52,71 @@
             -webkit-tap-highlight-color: transparent; 
         }
         ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
-        .hidden-tab { display: none !important; }
+        
+        input, select { 
+            background-color: #1D212A; 
+            border: 1px solid rgba(255,255,255,0.05); 
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
+            color: white; 
+            width: 100%; 
+            border-radius: 1.25rem; 
+            padding: 1rem 1.2rem; 
+            outline: none; 
+            font-weight: 600; 
+            font-size: 0.9rem; 
+        }
+        input:focus, select:focus { 
+            border-color: #FF9F0A; 
+            background-color: #15181E; 
+            box-shadow: 0 0 0 4px rgba(255, 159, 10, 0.15);
+        }
         
         /* Premium Interactive Hover & Focus State Protection */
         .btn-tactile { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
-        .btn-tactile:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5); }
+        .btn-tactile:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5); }
         .btn-tactile:active { transform: translateY(1px) scale(0.98); }
-        .btn-tactile:focus-visible { outline: 2px solid #9DFF00; outline-offset: 2px; }
-
-        /* Premium Skeleton Loading Animation */
-        .skeleton-pulse-card { position: relative; overflow: hidden; background-color: #1D212A; border: 1px solid rgba(255,255,255,0.05); }
-        .skeleton-pulse-card::after { 
-            content: ""; 
-            position: absolute; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); 
-            animation: premiumShimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
-        }
-        @keyframes premiumShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        .btn-tactile:focus-visible { outline: 2px solid #FF9F0A; outline-offset: 2px; }
         
-        /* Smooth Entry Animation */
+        .a4-wrapper { 
+            overflow-x: auto; 
+            background-color: #15181E; 
+            border-radius: 2.25rem; 
+            padding: 30px 20px; 
+            border: 1px solid rgba(255,255,255,0.05); 
+            text-align: center;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.4);
+        }
+        .a4-paper { 
+            width: 210mm; 
+            min-width: 210mm; 
+            min-height: 297mm; 
+            background: #FFFFFF; 
+            color: #000000; 
+            padding: 20mm 15mm; 
+            box-sizing: border-box; 
+            position: relative; 
+            box-shadow: 0 25px 60px -15px rgba(0,0,0,0.9);
+            margin: 0 auto;
+            display: inline-block;
+            text-align: left;
+            border-radius: 2px;
+        }
+        
+        #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .toast-show { transform: translateY(0) !important; }
+        
+        /* Smooth Hardware-Accelerated Entry Animation */
         @keyframes premiumFadeUp { 0% { opacity: 0; transform: translateY(20px); filter: blur(4px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
         .animate-premium-fade { animation: premiumFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .hidden-tab { display: none !important; }
     </style>
 </head>
 <body class="flex justify-center antialiased bg-[#0F1115] p-0 md:p-8 lg:p-12">
+
+    <!-- TOAST NOTIFICATION SYSTEM -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] bg-[#15181E] border border-white/10 text-white px-7 py-3.5 rounded-full font-bold text-xs flex items-center gap-3 w-max max-w-[90%] pointer-events-none shadow-[0_20px_40px_rgba(0,0,0,0.6)]">
+        <span id="toast-icon" class="text-appappleorange">⏳</span><span id="toast-msg" class="tracking-wide">Processing Architecture</span>
+    </div>
 
     <!-- MASTER SAAS FRAMEWORK INTERFACE -->
     <div class="w-full max-w-7xl bg-appbg min-h-screen relative flex flex-col mx-auto md:rounded-5xl md:border border-appborder overflow-hidden shadow-[0_32px_70px_-20px_rgba(0,0,0,0.8)] pb-32">
@@ -82,368 +130,410 @@
             </div>
             
             <div class="flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-2 rounded-full">
-                <span class="h-2 w-2 rounded-full bg-appaccent shadow-[0_0_12px_#9DFF00] animate-pulse"></span>
-                <h2 class="text-xs md:text-sm font-black tracking-[0.2em] uppercase text-white font-apple">Analytic & QC Engine</h2>
+                <span class="h-2 w-2 rounded-full bg-appappleorange shadow-[0_0_12px_#FF9F0A] animate-pulse"></span>
+                <h2 class="text-xs md:text-sm font-black tracking-[0.2em] uppercase text-white font-apple">Report Generator</h2>
             </div>
-
-            <button onclick="loadAnalytics()" class="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white hover:text-appaccent hover:bg-white/10 transition-all hover:rotate-45 active:scale-90" title="Sync Live Metrics">
-                <i class="fa-solid fa-rotate-right text-sm" id="sync-icon"></i>
-            </button>
+            <div class="w-16"></div>
         </div>
 
         <!-- MACRO-WHITESPACE WRAPPER CONTAINER -->
-        <div class="p-8 md:p-12 space-y-12 container mx-auto">
+        <div class="p-8 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start animate-premium-fade">
             
-            <!-- BENTO BLOCK GRID METRICS HUD -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                
-                <!-- Metric 1: SKU Overview -->
-                <div class="bg-appcard border border-appborder p-8 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-appborderhover transition-all duration-300">
-                    <div>
-                        <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Total Active SKU</p>
-                        <p id="stat-sku" class="text-6xl font-black text-white mt-4 tracking-tight font-apple transition-all group-hover:text-appaccent">0</p>
-                    </div>
-                    <div class="mt-8 flex items-center justify-between text-xs text-gray-500 font-medium border-t border-white/5 pt-4">
-                        <span>Database variants</span>
-                        <i class="fa-solid fa-box text-white/5 text-2xl group-hover:text-appaccent/10 transition-colors"></i>
-                    </div>
+            <!-- LEFT CONTROL PANEL PANEL: BENTO BLOCK CONTROLS (4 Columns) -->
+            <div class="lg:col-span-4 space-y-6 bg-appcard border border-appborder p-7 rounded-4xl lg:sticky lg:top-[110px] shadow-xl">
+                <div class="flex bg-black/40 p-1.5 rounded-2xl border border-white/5 text-center">
+                    <button onclick="switchReportView('analytic')" id="btn-rep-analytic" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile bg-appappleorange text-black">Analytic</button>
+                    <button onclick="switchReportView('log')" id="btn-rep-log" class="flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile text-gray-400 hover:text-white">Log PO</button>
                 </div>
 
-                <!-- Metric 2: DC Hub Coverage -->
-                <div class="bg-appcard border border-appborder p-8 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-appborderhover transition-all duration-300">
-                    <div>
-                        <p class="text-[10px] uppercase font-bold text-appaccent tracking-widest">DC Terpantau</p>
-                        <p id="stat-dc" class="text-6xl font-black text-white mt-4 tracking-tight font-apple transition-all group-hover:text-appaccent">0</p>
-                    </div>
-                    <div class="mt-8 flex items-center justify-between text-xs text-gray-500 font-medium border-t border-white/5 pt-4">
-                        <span>Regional operations</span>
-                        <i class="fa-solid fa-server text-white/5 text-2xl group-hover:text-appaccent/10 transition-colors"></i>
-                    </div>
+                <!-- Analytic Action Pipeline -->
+                <div id="ctrl-analytic" class="space-y-4">
+                    <label class="text-[10px] text-gray-400 font-bold uppercase tracking-widest block pl-1">Pilih Bulan Histori</label>
+                    <input type="month" id="analytic-month" onchange="renderReports()">
+                    <button onclick="downloadPDF('analytic')" class="w-full bg-appappleorange text-black font-black py-4.5 rounded-xl btn-tactile text-xs tracking-widest mt-2 flex items-center justify-center gap-2 border border-appappleorange/20 hover:bg-appappleorange/90">
+                        <i class="fa-solid fa-file-pdf text-sm"></i> UNDUH PDF ANALYTIC
+                    </button>
                 </div>
 
-                <!-- Metric 3: Live System Diagnostics Overview -->
-                <div class="md:col-span-2 bg-appcard border border-appborder p-8 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-appborderhover transition-all duration-300">
-                    <div class="flex justify-between items-start">
+                <!-- Log PO Action Pipeline -->
+                <div id="ctrl-log" class="hidden-tab space-y-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
-                            <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Logistics Analytics Platform</p>
-                            <h3 class="text-2xl font-black text-white mt-3 leading-snug tracking-tight">Traceability Matrix & Real-time Buffer Diagnostics</h3>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2 block pl-1">Pilih Bulan Pembukuan</label>
+                            <input type="month" id="report-month" onchange="renderReports()">
                         </div>
-                        <span class="text-[9px] font-black tracking-widest bg-appaccent/10 text-appaccent border border-appaccent/20 px-3 py-1 rounded-full uppercase">LIVE MATRIX</span>
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2 block pl-1">Filter DC Gudang</label>
+                            <select id="report-dc" onchange="renderReports()">
+                                <option value="ALL">ALL DC GUDANG</option>
+                            </select>
+                        </div>
                     </div>
-                    <p class="text-xs text-gray-400 font-medium mt-4 max-w-md leading-relaxed">Automated telemetry tracking target demand, safety metrics, distribution buffer management, and strict chronological batch aging diagnostics.</p>
+                    <button onclick="downloadPDF('log')" class="w-full bg-appgreen text-black font-black py-4.5 rounded-xl btn-tactile text-xs tracking-widest mt-2 flex items-center justify-center gap-2 border border-appgreen/20 hover:bg-appgreen/90">
+                        <i class="fa-solid fa-file-pdf text-sm"></i> UNDUH PDF LOG PO
+                    </button>
                 </div>
             </div>
 
-            <!-- MAIN INDUSTRIAL WORKSPACE METRICS -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-                
-                <!-- LEFT STREAM WORKSPACE: ADVANCED BATCH CONTROLS (7 Columns) -->
-                <div class="lg:col-span-7 space-y-8">
-                    
-                    <div class="bg-appcard border border-appborder p-8 rounded-4xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                        <div>
-                            <h4 class="text-xs font-black text-white uppercase tracking-[0.15em] flex items-center gap-2.5">
-                                <span class="h-2 w-2 rounded-full bg-apporange animate-ping"></span>
-                                CHRONOLOGICAL TRACEABILITY ENGINE
-                            </h4>
-                            <p class="text-xs text-gray-400 mt-2 font-medium leading-relaxed">Real-time inventory assessment sorting current operational batches based on remaining legal market lifespan constraints.</p>
-                        </div>
-                    </div>
-                    
-                    <!-- HIGH-INTERACTIVE ACCORDION BUTTON SYSTEM WITH HOVER STATES -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <button type="button" onclick="toggleBatchGroup('crit')" class="bg-appcard border border-appborder p-7 rounded-4xl text-left btn-tactile group relative overflow-hidden focus:outline-none">
-                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 transition-colors group-hover:text-appred">Critical Lifecycle (&lt;= 3 Bln)</p>
-                            <div class="flex items-baseline justify-between">
-                                <p id="stat-grade-crit" class="text-5xl font-black text-appred tracking-tight font-apple">0</p>
-                                <span class="h-9 w-9 rounded-full bg-appred/5 border border-appred/10 flex items-center justify-center text-appred group-hover:bg-appred/20 transition-all">
-                                    <i class="fa-solid fa-chevron-up text-[10px]" id="icon-crit"></i>
-                                </span>
-                            </div>
-                            <div class="mt-6 pt-5 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-black text-gray-500 group-hover:text-white transition-colors">
-                                <span>Inspect Pipeline</span>
-                                <i class="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
-                            </div>
-                        </button>
-
-                        <button type="button" onclick="toggleBatchGroup('safe')" class="bg-appcard border border-appborder p-7 rounded-4xl text-left btn-tactile group relative overflow-hidden focus:outline-none">
-                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 transition-colors group-hover:text-appgreen">Safe Lifecycle (&gt; 3 Bln)</p>
-                            <div class="flex items-baseline justify-between">
-                                <p id="stat-grade-safe" class="text-5xl font-black text-appgreen tracking-tight font-apple">0</p>
-                                <span class="h-9 w-9 rounded-full bg-appgreen/5 border border-appgreen/10 flex items-center justify-center text-appgreen group-hover:bg-appgreen/20 transition-all">
-                                    <i class="fa-solid fa-chevron-down text-[10px]" id="icon-safe"></i>
-                                </span>
-                            </div>
-                            <div class="mt-6 pt-5 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-black text-gray-500 group-hover:text-white transition-colors">
-                                <span>Inspect Pipeline</span>
-                                <i class="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
-                            </div>
-                        </button>
-                    </div>
-
-                    <!-- ASYNC PIPELINE STREAM ENGINE LAYER -->
-                    <div id="group-crit" class="space-y-5 pt-2"></div>
-                    <div id="group-safe" class="space-y-5 pt-2 hidden-tab"></div>
+            <!-- RIGHT CONTROL PANEL: LIVE PRINT PREVIEW VIEWPORT (8 Columns) -->
+            <div class="lg:col-span-8 space-y-6 overflow-hidden">
+                <div class="flex items-center justify-center gap-2 text-[10px] text-gray-500 font-black uppercase tracking-[0.25em] mb-2 bg-white/5 py-2.5 rounded-full border border-white/5">
+                    <i class="fa-solid fa-eye animate-pulse"></i> Live Print Viewport (A4 Resmi)
                 </div>
-
-                <!-- RIGHT STREAM WORKSPACE: PREMIUM CONTRAST MATRIX (5 Columns) -->
-                <div class="lg:col-span-5 space-y-10">
-                    
-                    <!-- HIGH CONTRAST BLOCK: INVENTORY STOCK HEALTH MATRIX -->
-                    <div class="bg-appcontrast text-black rounded-4xl border border-white/10 overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] transition-all">
-                        <div class="bg-black/[0.02] px-7 py-6 border-b border-black/[0.06] flex justify-between items-center">
-                            <h4 class="text-xs font-black text-black uppercase tracking-widest flex items-center gap-2.5">
-                                <i class="fa-solid fa-chart-bar text-base text-black/60"></i> 
-                                STOCK HEALTH INDEX
-                            </h4>
-                            <span class="text-[8px] font-black bg-black text-white px-2.5 py-1 rounded-md tracking-widest uppercase">QC READOUT</span>
+                
+                <!-- Viewport Area: Analytic Report -->
+                <div class="a4-wrapper" id="view-print-analytic">
+                    <div id="print-analytic" class="a4-paper">
+                        <!-- Premium Typography Corporate Letterhead -->
+                        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px double #D1D5DB; padding-bottom: 20px;">
+                            <h1 style="font-size: 26px; font-weight: 900; margin:0; color:#FF453A; letter-spacing: 0.05em; font-family:Arial, Helvetica, sans-serif;">FAMILY FOOD INDONESIA</h1>
+                            <p style="margin: 6px 0 0 0; color: #4B5563; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em;">Executive SC Analytic Report</p>
+                            <p style="margin: 4px 0 0 0; color: #9CA3AF; font-size: 11px; font-style:italic; font-weight: 500;" id="lbl-analytic-date">-</p>
                         </div>
                         
-                        <div class="overflow-x-auto">
-                            <div class="min-w-[420px] md:min-w-0">
-                                <!-- Structural Alignment Table Header -->
-                                <div class="grid grid-cols-5 gap-2 px-7 py-4 text-[9px] text-black/40 font-black uppercase tracking-widest border-b border-black/[0.04] text-center">
-                                    <div class="text-left">NAMA SKU</div>
-                                    <div>AVG 3M</div>
-                                    <div id="th-forecast" class="text-black/80 font-extrabold">FCST</div>
-                                    <div id="th-buffer" class="text-appred font-extrabold">BUFF</div>
-                                    <div>STATUS</div>
-                                </div>
-                                <!-- Script-generated Container Area -->
-                                <div id="forecast-container" class="px-5 pb-5 divide-y divide-black/[0.04]"></div>
+                        <!-- Premium Contrast Corporate Value Metrics -->
+                        <div style="display: flex; justify-content: space-between; gap: 15px; margin-bottom: 30px; font-family: Arial, sans-serif;">
+                            <div style="width: 33.33%; background:#F3F4F6; padding:18px 15px; border-radius:12px; border:1px solid #E5E7EB; box-sizing: border-box; transition: all 0.3s;">
+                                <div style="font-size:10px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Fulfillment PO</div>
+                                <div id="rep-fulfill" style="font-size:26px; font-weight:900; margin-top:6px; color:#32D74B">0%</div>
+                            </div>
+                            <div style="width: 33.33%; background:#F3F4F6; padding:18px 15px; border-radius:12px; border:1px solid #E5E7EB; box-sizing: border-box;">
+                                <div style="font-size:10px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Alert Supply Chain</div>
+                                <div id="rep-alert" style="font-size:12px; font-weight:900; margin-top:14px; color:#FF453A; letter-spacing: 0.02em;">N/A</div>
+                            </div>
+                            <div style="width: 33.33%; background:#F3F4F6; padding:18px 15px; border-radius:12px; border:1px solid #E5E7EB; box-sizing: border-box;">
+                                <div style="font-size:10px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em;">Volume (PO/Sales)</div>
+                                <div id="rep-prod" style="font-size:18px; font-weight:900; margin-top:10px; color:#0A84FF">0 / 0</div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- REVISIONED DC DIAGNOSE BLOCK -->
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between px-2">
-                            <h4 class="text-xs font-black text-white uppercase tracking-[0.2em] text-gray-400">Network Distribution Feed</h4>
-                            <div class="flex gap-1">
-                                <span class="h-1.5 w-1.5 rounded-full bg-white/20"></span>
-                                <span class="h-1.5 w-1.5 rounded-full bg-white/20"></span>
-                                <span class="h-1.5 w-1.5 rounded-full bg-appaccent animate-pulse"></span>
-                            </div>
+                        <div style="background:#F3F4F6; padding:16px; border-radius:12px; border:1px solid #E5E7EB; margin-bottom:30px; text-align:center; font-family:Arial, sans-serif;">
+                            <div style="font-size:11px; color:#6B7280; text-transform:uppercase; font-weight:800; letter-spacing: 0.05em; mb-2">Global Inventory Health Status</div>
+                            <div id="rep-inv-health" style="font-size:16px; font-weight:900; margin-top:6px; color:#000000;">0 Critical | 0 Safe</div>
                         </div>
-                        <div id="diagnosa-container" class="grid grid-cols-1 gap-5"></div>
-                    </div>
 
+                        <!-- Data Presentation Graphical Grid Section -->
+                        <table style="width: 100%; table-layout: fixed; margin-top: 40px; font-family: Arial, sans-serif; border: none; page-break-inside: avoid;">
+                            <tr>
+                                <td style="width: 50%; text-align: center; vertical-align: top; padding-right: 15px; border: none;">
+                                    <h4 style="font-size:13px; margin-bottom:20px; font-weight:800; color:#374151; text-transform: uppercase; letter-spacing: 0.05em;">SKU Demand vs Target</h4>
+                                    <div style="width: 280px; height: 210px; margin: 0 auto; display: flex; justify-content: center; align-items: center;">
+                                        <canvas id="chartBar" width="280" height="210"></canvas>
+                                    </div>
+                                </td>
+                                <td style="width: 50%; text-align: center; vertical-align: top; padding-left: 15px; border: none;">
+                                    <h4 style="font-size:13px; margin-bottom:20px; font-weight:800; color:#374151; text-transform: uppercase; letter-spacing: 0.05em;">DC Issue Distribution</h4>
+                                    <div style="width: 280px; height: 210px; margin: 0 auto; display: flex; justify-content: center; align-items: center;">
+                                        <canvas id="chartPie" width="280" height="210"></canvas>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Viewport Area: Log PO Report -->
+                <div class="a4-wrapper hidden-tab" id="view-print-log">
+                    <div id="print-log" class="a4-paper">
+                        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px double #D1D5DB; padding-bottom: 20px; font-family: Arial, sans-serif;">
+                            <h1 style="font-size: 24px; font-weight: 900; margin:0; color:#0A84FF; letter-spacing: 0.05em;">LOG PURCHASE ORDER REPORT</h1>
+                            <p style="margin: 8px 0 0 0; color: #4B5563; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;" id="rep-log-period">Periode Pembukuan: -</p>
+                        </div>
+                        <div id="rep-log-content" style="font-family: Arial, sans-serif; width:100%;"></div>
+                    </div>
                 </div>
 
             </div>
-
         </div>
     </div>
 
-    <!-- CORE INTERACTION AND ASYNC DATA LOGIC INTERACTION PLATFORM -->
+    <!-- CORE REPORTING METRICS ARCHITECTURE & PROCESSING SCRIPT -->
     <script>
+        Chart.register(ChartDataLabels);
+
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+        
+        let dbLogData = []; 
+        let dbForecastData = []; 
+        let isDataLoaded = false;
+        let barChart = null; 
+        let pieChart = null;
+
+        const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
 
         document.addEventListener('DOMContentLoaded', () => {
             if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
-            updateMonthHeaders(); setTimeout(() => { loadAnalytics(); }, 100);
+            
+            const currMonth = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('analytic-month').value = currMonth;
+            document.getElementById('report-month').value = currMonth;
+            
+            const sel = document.getElementById('report-dc');
+            const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
+            DC_LIST.forEach(dc => sel.innerHTML += `<option value="${dc}">${dc}</option>`);
+
+            setTimeout(() => { initialFetch(); }, 100);
         });
 
-        function updateMonthHeaders() {
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]; const d = new Date();
-            document.getElementById('th-buffer').innerHTML = `BUFFER<br><span class="text-[8px] font-normal tracking-wide">(${months[d.getMonth()]})</span>`; 
-            document.getElementById('th-forecast').innerHTML = `FCST<br><span class="text-[8px] font-normal tracking-wide">(${months[(d.getMonth() + 1) % 12]})</span>`;
+        function showToast(msg) {
+            const t = document.getElementById('toast'); 
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('toast-show'); 
+            setTimeout(() => t.classList.remove('toast-show'), 2500);
         }
 
-        // Vary & Enhance Level 3: Skeleton UI Blocks Injection Generator
-        function getPremiumSkeleton(count, isLargeCard=false) { 
-            if(isLargeCard) {
-                return Array(count).fill(`
-                    <div class="skeleton-pulse-card rounded-4xl p-6 h-48 w-full mb-4 border border-white/5 flex flex-col justify-between">
-                        <div>
-                            <div class="h-3 bg-white/5 rounded-full w-1/4 mb-4"></div>
-                            <div class="h-6 bg-white/5 rounded-full w-1/2"></div>
-                        </div>
-                        <div class="h-10 bg-white/5 rounded-2xl w-full"></div>
-                    </div>
-                `).join('');
-            }
-            return Array(count).fill(`
-                <div class="skeleton-pulse-card rounded-xl h-12 w-full mb-2"></div>
-            `).join(''); 
-        }
-
-        function toggleBatchGroup(type) {
-            const grp = document.getElementById('group-' + type);
-            const icon = document.getElementById('icon-' + type);
-            if(grp.classList.contains('hidden-tab')) {
-                grp.classList.remove('hidden-tab'); icon.classList.remove('fa-chevron-down'); icon.classList.add('fa-chevron-up');
+        function switchReportView(type) {
+            document.getElementById('view-print-analytic').classList.add('hidden-tab');
+            document.getElementById('view-print-log').classList.add('hidden-tab');
+            document.getElementById('ctrl-analytic').classList.add('hidden-tab');
+            document.getElementById('ctrl-log').classList.add('hidden-tab');
+            
+            document.getElementById('btn-rep-analytic').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile text-gray-400 hover:text-white";
+            document.getElementById('btn-rep-log').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile text-gray-400 hover:text-white";
+            
+            if(type === 'analytic') {
+                document.getElementById('view-print-analytic').classList.remove('hidden-tab');
+                document.getElementById('ctrl-analytic').classList.remove('hidden-tab');
+                document.getElementById('btn-rep-analytic').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile bg-appappleorange text-black";
             } else {
-                grp.classList.add('hidden-tab'); icon.classList.remove('fa-chevron-up'); icon.classList.add('fa-chevron-down');
+                document.getElementById('view-print-log').classList.remove('hidden-tab');
+                document.getElementById('ctrl-log').classList.remove('hidden-tab');
+                document.getElementById('btn-rep-log').className = "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-wider btn-tactile bg-appgreen text-black";
             }
         }
 
-        async function loadAnalytics() {
-            const icn = document.getElementById('sync-icon'); icn.classList.add('fa-spin');
-            const fCont = document.getElementById('forecast-container'); const dCont = document.getElementById('diagnosa-container'); 
-            const contCrit = document.getElementById('group-crit'); const contSafe = document.getElementById('group-safe');
-            
-            // Render Skeleton Loaders dynamically across the dashboard infrastructure
-            fCont.innerHTML = getPremiumSkeleton(5); 
-            dCont.innerHTML = getPremiumSkeleton(3, true); 
-            contCrit.innerHTML = getPremiumSkeleton(2, true); 
-            contSafe.innerHTML = getPremiumSkeleton(2, true);
-            
+        function extractN8nData(res) {
+            if (!res) return [];
+            if (Array.isArray(res)) {
+                if (res[0]?.json?.data) return res[0].json.data;
+                if (res[0]?.data) return res[0].data;
+                return res;
+            }
+            if (res.json?.data) return res.json.data;
+            if (res.data) return res.data;
+            return [];
+        }
+
+        async function initialFetch() {
+            showToast("Mengunduh Data Database...");
             try {
-                const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }), 
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_diagnose" }) }),
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "get_db_stock" }) }),
-                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) })
+                const [reqLog, reqBuffer] = await Promise.all([
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()),
+                    fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json())
                 ]);
                 
-                // 1. Target Forecast Processing Block Module
-                fCont.innerHTML = ''; let skuCount = 0;
-                if(reqBuffer.status === 'fulfilled') {
-                    let r = await reqBuffer.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
-                    (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
-                        const row = item.json || item; const vals = Object.values(row); let sku = row.col_2 || vals[1];
-                        if(!sku || String(sku).includes("NAMA SKU") || String(sku).includes("col_")) return;
-                        const st = String(row.col_6 || vals[5] || ""); skuCount++;
-                        
-                        const indicatorDot = st.includes("CRITICAL") 
-                            ? '<span class="h-2 w-2 rounded-full bg-appred inline-block shadow-[0_0_8px_#FF453A] animate-pulse"></span>' 
-                            : '<span class="h-2 w-2 rounded-full bg-appgreen inline-block"></span>';
-                            
-                        fCont.innerHTML += `
-                        <div class="grid grid-cols-5 gap-2 items-center py-4 border-b border-black/[0.03] text-[11px] text-center font-apple text-black/80 hover:bg-black/[0.01] transition-colors rounded-lg px-2 animate-premium-fade" style="animation-delay:${idx*20}ms; opacity:0">
-                            <div class="font-bold text-left text-black truncate">${sku}</div>
-                            <div class="text-black/40 font-medium">${Math.round(Number(row.col_3||vals[2]||0))}</div>
-                            <div class="font-bold text-black/90">${Math.round(Number(row.col_4||vals[3]||0))}</div>
-                            <div class="font-black text-appred">${Math.round(Number(row.col_5||vals[4]||0))}</div>
-                            <div class="flex justify-center">${indicatorDot}</div>
-                        </div>`;
-                    });
-                } document.getElementById('stat-sku').innerText = skuCount;
-
-                // 2. Complex Traceability Architecture Pipeline Processing
-                let cCrit=0, cSafe=0;
-                let htmlCrit = ""; let htmlSafe = "";
+                dbLogData = extractN8nData(reqLog);
+                dbForecastData = extractN8nData(reqBuffer);
                 
-                let logData = [];
-                if(reqLog.status === 'fulfilled') { let r = await reqLog.value.json(); logData = Array.isArray(r) ? r[0].data || r : r.data; }
+                isDataLoaded = true;
+                showToast("Data Tersinkronisasi!");
+                renderReports();
+            } catch(e) { 
+                console.error("Sync gagal", e);
+                showToast("Gagal menyinkronkan data!");
+            }
+        }
+
+        function renderReports() {
+            if(!isDataLoaded) return;
+            renderAnalyticReport();
+            renderLogReport();
+        }
+
+        function renderAnalyticReport() {
+            const mon = document.getElementById('analytic-month').value; if(!mon) return;
+            const [y, mStr] = mon.split('-'); const mInt = parseInt(mStr, 10);
+            document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y} | Global Control`;
+
+            let totPO=0, totSales=0;
+            let fCount=0, mCount=0, aCount=0; 
+            
+            let skuNKA_PO=0, skuNDLH_PO=0, skuNRD_PO=0, skuNARR_PO=0, skuNKACH_PO=0;
+            let skuNKA_Sls=0, skuNDLH_Sls=0, skuNRD_Sls=0, skuNARR_Sls=0, skuNKACH_Sls=0;
+
+            dbLogData.forEach(i => {
+                const row = i.json || i; 
+                if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return;
                 
-                if(reqStock.status === 'fulfilled') {
-                    let r = await reqStock.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
+                const tgl = String(row["Tanggal PO"] || "");
+                if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`)) return;
+                
+                const poCtn = safeNum(row["TOTAL PO ctn"]);
+                totPO += poCtn;
+                totSales += safeNum(row["Qty Terpenuhi (Kirim)"]);
 
-                    (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
-                        const row = item.json || item; 
-                        const batchName = row["Nama Batch"] || row.nama_batch || row.col_2; 
-                        const expDateStr = row["Tanggal Expired"] || row.tanggal_exp || row.col_3;
-                        
-                        if(!batchName || String(batchName).toUpperCase() === 'NAMA BATCH') return;
-                        
-                        let expDate = expDateStr.includes('/') ? new Date(expDateStr.split('/')[2], expDateStr.split('/')[1]-1, expDateStr.split('/')[0]) : new Date(expDateStr);
-                        const now = new Date(); 
-                        
-                        let sisaBulan = 99;
-                        if(!isNaN(expDate)) {
-                            sisaBulan = (expDate.getFullYear() - now.getFullYear()) * 12;
-                            sisaBulan -= now.getMonth();
-                            sisaBulan += expDate.getMonth();
-                        }
-                        
-                        let isCritical = sisaBulan <= 3;
-                        let badgeBorder = isCritical ? "bg-appred/10 text-appred border-appred/20" : "bg-appgreen/10 text-appgreen border-appgreen/20";
-                        let warningText = sisaBulan <= 0 ? "EXPIRED / MATI" : `Sisa ${sisaBulan} Bulan`;
-                        let locChipBg = isCritical ? "bg-appred text-white shadow-[0_4px_10px_rgba(255,69,58,0.25)]" : "bg-appgreen text-black font-extrabold shadow-[0_4px_10px_rgba(50,215,75,0.2)]";
+                skuNKA_PO += safeNum(row["PO NKA"]);
+                skuNDLH_PO += safeNum(row["PO NDLH"]);
+                skuNRD_PO += safeNum(row["PO NRD"]);
+                skuNARR_PO += safeNum(row["PO NARR"]);
+                skuNKACH_PO += safeNum(row["PO NKACH"]);
 
-                        let skusInBatch = [];
-                        if(Number(row.NKA || row.nka || 0) > 0) skusInBatch.push("NKA");
-                        if(Number(row.NDLH || row.ndlh || 0) > 0) skusInBatch.push("NDLH");
-                        if(Number(row.NRD || row.nrd || 0) > 0) skusInBatch.push("NRD");
-                        if(Number(row.NARR || row.narr || 0) > 0) skusInBatch.push("NARR");
-                        if(Number(row.NKACH || row.nkach || 0) > 0) skusInBatch.push("NKACH");
+                skuNKA_Sls += safeNum(row["NKA"]);
+                skuNDLH_Sls += safeNum(row["NDLH"]);
+                skuNRD_Sls += safeNum(row["NRD"]);
+                skuNARR_Sls += safeNum(row["NARR"]);
+                skuNKACH_Sls += safeNum(row["NKACH"]);
 
-                        let skuHtml = skusInBatch.length > 0 
-                            ? `<div class="flex flex-wrap gap-1.5 mt-2.5">${skusInBatch.map(s => `<span class="bg-white/5 text-white/90 text-[9px] px-3 py-1.5 rounded-lg font-bold tracking-widest border border-white/5 group-hover:bg-white/10 transition-colors">${s}</span>`).join('')}</div>`
-                            : `<span class="text-[9px] text-gray-600 italic mt-2.5 block">Varian tidak tercatat</span>`;
-
-                        let locs = [];
-                        logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(batchName) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
-                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-3">${locs.map(dc => `<span class="${locChipBg} text-[9px] px-3 py-1.5 rounded-lg tracking-wider uppercase font-bold transition-transform duration-300 group-hover:scale-105">${dc}</span>`).join('')}</div>` : `<span class="text-[9px] text-gray-600 italic mt-3 block">Belum ada sebaran di DC</span>`;
-
-                        let cardHtml = `
-                        <div class="bg-appcard p-7 rounded-4xl border border-appborder hover:border-appborderhover flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 shadow-xl animate-premium-fade" style="animation-delay:${idx*20}ms; opacity:0">
-                            <div>
-                                <div class="flex justify-between items-start gap-4 mb-3">
-                                    <div>
-                                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Batch Number Reference</p>
-                                        <h4 class="font-black text-xl text-white uppercase tracking-tight mt-1 transition-colors group-hover:text-appaccent">${batchName}</h4>
-                                    </div>
-                                    <div class="px-3 py-1.5 rounded-full border ${badgeBorder} text-[10px] font-black uppercase tracking-wider bg-black/20">
-                                        ${warningText}
-                                    </div>
-                                </div>
-                                <p class="text-[10px] text-gray-400 font-medium tracking-wide mb-6">Maturity Deadline: <span class="text-white font-semibold">${expDateStr}</span></p>
-                                
-                                <div class="mb-6">
-                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">📦 Associated SKU Profiles</p>
-                                    ${skuHtml}
-                                </div>
-                            </div>
-
-                            <div class="border-t border-white/5 pt-5 mt-3">
-                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">📍 Structural Location Spread Network</p>
-                                ${locH}
-                            </div>
-                        </div>`;
-
-                        if(isCritical) {
-                            htmlCrit += cardHtml; cCrit++;
-                        } else {
-                            htmlSafe += cardHtml; cSafe++;
-                        }
-                    });
-                    
-                    contCrit.innerHTML = htmlCrit || `<div class="p-10 text-center border border-dashed border-appborder rounded-4xl bg-white/[0.01]"><p class="text-gray-500 font-medium text-xs uppercase tracking-widest">✨ Zero Critical Lifecycles Isolated</p></div>`;
-                    contSafe.innerHTML = htmlSafe || `<div class="p-10 text-center border border-dashed border-appborder rounded-4xl bg-white/[0.01]"><p class="text-gray-500 font-medium text-xs uppercase tracking-widest">No Operational Lifecycles Active</p></div>`;
+                const ssc = String(row["Status Supply Chain (SSC)"] || "").toUpperCase();
+                if (ssc.includes("WAREHOUSE FAILURE") || ssc.includes("WH FAIL")) {
+                    fCount += poCtn;
+                } else if (ssc.includes("UNDER MOQ")) {
+                    mCount += poCtn;
+                } else if (ssc.includes("ABOVE MOQ") || ssc.includes("SAFE")) {
+                    aCount += poCtn;
                 }
-                document.getElementById('stat-grade-crit').innerText = cCrit; document.getElementById('stat-grade-safe').innerText = cSafe;
+            });
+            
+            document.getElementById('rep-fulfill').innerText = totPO ? `${Math.round((totSales/totPO)*100)}%` : "0%";
+            document.getElementById('rep-prod').innerText = `${totPO} / ${totSales}`;
 
-                // 3. DC Telemetry Diagnostics Streams Infrastructure
-                dCont.innerHTML = ''; let dcCount = 0;
-                if(reqDiag.status === 'fulfilled') {
-                    let r = await reqDiag.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
-                    (Array.isArray(d) ? d : [d]).forEach((item, idx) => {
-                        const row = item.json || item; const dc = row.dc || row.col_2; if(!dc || dc.includes("DIAGNOSE")) return;
-                        dcCount++; const res = String(row.res || row.col_9 || "").toUpperCase();
-                        
-                        let badgeColor = "bg-apporange/10 text-apporange border-apporange/20"; 
-                        if(res.includes("FAIL")) badgeColor = "bg-appred/10 text-appred border-appred/20"; 
-                        else if(res.includes("ABOVE")||res.includes("SAFE")) badgeColor = "bg-appgreen/10 text-appgreen border-appgreen/20";
-                        
-                        dCont.innerHTML += `
-                        <div class="bg-appcard p-7 rounded-4xl border border-appborder hover:border-appborderhover transition-all duration-300 group hover:-translate-y-1 shadow-lg animate-premium-fade" style="animation-delay:${idx*20}ms; opacity:0">
-                            <div class="flex justify-between items-center gap-4 mb-5">
-                                <h4 class="text-base font-black text-white truncate max-w-[200px] transition-colors group-hover:text-appaccent">${dc}</h4>
-                                <p class="text-[9px] font-black ${badgeColor} border px-3 py-1.5 rounded-full uppercase tracking-wider bg-black/20">${res}</p>
-                            </div>
-                            
-                            <div class="grid grid-cols-3 text-center bg-black/40 border border-white/5 p-4 rounded-3xl gap-2 shadow-inner">
-                                <div class="border-r border-white/5">
-                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">Fail Matrix</p>
-                                    <p class="text-sm font-black text-appred font-apple">${row.failPct||Math.round((row.col_4||0)*100)}%</p>
-                                </div>
-                                <div class="border-r border-white/5">
-                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">Under Buffer</p>
-                                    <p class="text-sm font-black text-apporange font-apple">${row.moqPct||Math.round((row.col_6||0)*100)}%</p>
-                                </div>
-                                <div>
-                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">Above Target</p>
-                                    <p class="text-sm font-black text-appgreen font-apple">${row.abovePct||Math.round((row.col_8||0)*100)}%</p>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-                } document.getElementById('stat-dc').innerText = dcCount;
+            const validForecast = dbForecastData.filter(i => {
+                const row = i.json || i;
+                if (!row.col_2 || String(row.col_2).toUpperCase() === 'SKU') return false;
+                const fTgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
+                if (fTgl && !fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`) && !fTgl.includes(`${y}-${mStr}`)) return false;
+                return true;
+            });
 
-            } catch(e) { console.error(e); } finally { icn.classList.remove('fa-spin'); }
+            let crit=0, safe=0;
+            validForecast.forEach(i => { 
+                const row = i.json || i; 
+                if(String(row.col_6||"").toUpperCase().includes("CRITICAL")) crit++; 
+                else safe++; 
+            });
+            
+            document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
+            document.getElementById('rep-inv-health').innerHTML = `<span style="color:#FF453A; font-weight:bold;">${crit} SKU Kritis</span> &nbsp;|&nbsp; <span style="color:#32D74B; font-weight:bold;">${safe} SKU Aman</span>`;
+
+            if(barChart) barChart.destroy(); 
+            if(pieChart) pieChart.destroy();
+            
+            barChart = new Chart(document.getElementById('chartBar'), {
+                type: 'bar',
+                data: { 
+                    labels: ['NKA', 'NDLH', 'NRD', 'NARR', 'NKACH'], 
+                    datasets: [
+                        { label: 'Demand', data: [skuNKA_Sls, skuNDLH_Sls, skuNRD_Sls, skuNARR_Sls, skuNKACH_Sls], backgroundColor: '#0A84FF' },
+                        { label: 'PO Target', data: [skuNKA_PO, skuNDLH_PO, skuNRD_PO, skuNARR_PO, skuNKACH_PO], backgroundColor: '#FF453A' }
+                    ] 
+                },
+                options: { 
+                    animation: false, responsive: false, maintainAspectRatio: false,
+                    plugins: { datalabels: { display: false } }
+                }
+            });
+            
+            pieChart = new Chart(document.getElementById('chartPie'), {
+                type: 'pie',
+                data: { 
+                    labels: ['WH Fail', 'Under MOQ', 'Safe'], 
+                    datasets: [{ data: [fCount, mCount, aCount], backgroundColor: ['#FF453A', '#FF9F0A', '#32D74B'] }] 
+                },
+                options: { 
+                    animation: false, responsive: false, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: {size: 10, family: 'Arial'} } },
+                        datalabels: {
+                            color: '#ffffff',
+                            font: { weight: 'bold', size: 10, family: 'Arial' },
+                            textAlign: 'center',
+                            formatter: (value, ctx) => {
+                                if(value === 0) return null; 
+                                let sum = 0;
+                                ctx.chart.data.datasets[0].data.forEach(data => sum += data);
+                                let percentage = (value * 100 / sum).toFixed(1) + "%";
+                                return `${value}\n(${percentage})`;
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderLogReport() {
+            const mon = document.getElementById('report-month').value; const dcVal = document.getElementById('report-dc').value;
+            if(!mon) return; const [y, mStr] = mon.split('-'); const mInt = parseInt(mStr, 10);
+            document.getElementById('rep-log-period').innerHTML = `Periode: ${mStr} / ${y} &nbsp;|&nbsp; Target: <span style="color:#0A84FF;">${dcVal}</span>`;
+
+            let rows = dbLogData.filter(i => {
+                const row = i.json || i;
+                if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return false; 
+                const matchM = (row["Tanggal PO"]||"").includes(`${mStr}/${y}`) || (row["Tanggal PO"]||"").includes(`/${mInt}/${y}`);
+                const matchD = dcVal === "ALL" || String(row.DC).toUpperCase() === String(dcVal).toUpperCase();
+                return matchM && matchD;
+            });
+
+            let html = `
+            <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family: Arial, sans-serif;">
+                <thead>
+                    <tr style="background:#F3F4F6; color:#374151;">
+                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; font-weight:800;">ID PO</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; font-weight:800;">TANGGAL</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; font-weight:800;">DC</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; text-align:center; font-weight:800;">PO (CTN)</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; text-align:center; font-weight:800;">SALES</th>
+                        <th style="padding:12px 10px; border-bottom:2px solid #D1D5DB; text-align:center; font-weight:800;">GAP</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            rows.forEach(i => {
+                const row = i.json || i;
+                const po = safeNum(row["TOTAL PO ctn"]); 
+                const sls = safeNum(row["Qty Terpenuhi (Kirim)"]); 
+                const gap = safeNum(row.GAP);
+                
+                html += `
+                <tr style="page-break-inside: avoid;">
+                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; font-weight:bold; color:#000000;">${row.ID}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; color:#4B5563;">${row["Tanggal PO"]}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; font-weight:500;">${row.DC}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:500;">${po}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:500;">${sls}</td>
+                    <td style="padding:10px; border-bottom:1px solid #E5E7EB; text-align:center; font-weight:bold; color:${gap>0?'#FF453A':'#32D74B'}">${gap}</td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#9CA3AF; padding:50px; font-style:italic; font-size:12px;">Tidak ada data pembukuan di filter ini.</p>`;
+        }
+
+        function downloadPDF(type) {
+            let id = type === 'analytic' ? 'print-analytic' : 'print-log';
+            let fileName = "";
+            
+            if (type === 'analytic') {
+                const mon = document.getElementById('analytic-month').value || 'All';
+                fileName = `FFI_Analytic_Report_${mon}`;
+            } else {
+                const mon = document.getElementById('report-month').value || 'All';
+                const dc = document.getElementById('report-dc').value || 'ALL';
+                fileName = `FFI_Log_PO_${mon}_${dc.replace(/ /g, "_")}`;
+            }
+
+            showToast("Mempersiapkan Dokumen...");
+            window.scrollTo(0, 0); 
+            
+            const element = document.getElementById(id);
+            const opt = { 
+                margin:       [12, 0], 
+                filename:     `${fileName}.pdf`, 
+                image:        { type: 'jpeg', quality: 1 }, 
+                html2canvas:  { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                }, 
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast("PDF Berhasil Diunduh!");
+            }).catch((err) => {
+                console.error(err);
+                showToast("Gagal memproses PDF.");
+            });
         }
     </script>
 </body>
