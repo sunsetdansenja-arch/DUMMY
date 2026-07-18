@@ -14,10 +14,12 @@
                 extend: { 
                     colors: { 
                         appbg: '#0F1115', 
-                        appcard: '#1D212A', 
+                        appcard: '#15181E', 
+                        appcardsec: '#1D212A',
                         appaccent: '#9DFF00',
                         appcontrast: '#FFFFFF',
-                        appborder: 'rgba(255, 255, 255, 0.06)',
+                        appborder: 'rgba(255, 255, 255, 0.05)',
+                        appborderhover: 'rgba(255, 255, 255, 0.12)',
                         appred: '#FF453A', 
                         appgreen: '#32D74B',
                         apporange: '#FF9F0A'
@@ -25,7 +27,7 @@
                     borderRadius: { 
                         '3xl': '1.25rem',
                         '4xl': '1.75rem',
-                        '5xl': '2.5rem'
+                        '5xl': '2.25rem'
                     },
                     fontFamily: { 
                         'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'] 
@@ -43,170 +45,187 @@
         }
         ::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
         .hidden-tab { display: none !important; }
-        .btn-tactile { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
-        .btn-tactile:active { transform: scale(0.96); }
-        .skeleton-box { position: relative; overflow: hidden; background-color: #1D212A; }
-        .skeleton-box::after { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent); animation: shimmer 1.5s infinite; }
-        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        /* Premium Interactive Hover & Focus State Protection */
+        .btn-tactile { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; }
+        .btn-tactile:hover { transform: translateY(-2px); border-color: rgba(255, 255, 255, 0.15); box-shadow: 0 12px 30px -10px rgba(0,0,0,0.5); }
+        .btn-tactile:active { transform: translateY(1px) scale(0.98); }
+        .btn-tactile:focus-visible { outline: 2px solid #9DFF00; outline-offset: 2px; }
+
+        /* Premium Skeleton Loading Animation */
+        .skeleton-pulse-card { position: relative; overflow: hidden; background-color: #1D212A; border: 1px solid rgba(255,255,255,0.05); }
+        .skeleton-pulse-card::after { 
+            content: ""; 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); 
+            animation: premiumShimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; 
+        }
+        @keyframes premiumShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        
+        /* Smooth Entry Animation */
+        @keyframes premiumFadeUp { 0% { opacity: 0; transform: translateY(20px); filter: blur(4px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        .animate-premium-fade { animation: premiumFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="flex justify-center antialiased bg-[#0F1115] p-0 md:p-6 lg:p-8">
+<body class="flex justify-center antialiased bg-[#0F1115] p-0 md:p-8 lg:p-12">
 
-    <!-- MAIN DASHBOARD CONTAINER (Apple OS SaaS Framework) -->
-    <div class="w-full max-w-7xl bg-appbg min-h-screen relative flex flex-col mx-auto md:rounded-5xl md:border border-appborder overflow-hidden shadow-2xl pb-24">
+    <!-- MASTER SAAS FRAMEWORK INTERFACE (Vary & Enhance Level 3) -->
+    <div class="w-full max-w-7xl bg-appbg min-h-screen relative flex flex-col mx-auto md:rounded-5xl md:border border-appborder overflow-hidden shadow-[0_32px_70px_-20px_rgba(0,0,0,0.8)] pb-32">
         
-        <!-- HEADER TOP BAR -->
-        <div class="px-6 py-6 md:px-10 sticky top-0 bg-[#0F1115]/80 backdrop-blur-2xl z-20 flex justify-between items-center border-b border-appborder">
+        <!-- STICKY PREMIUM BLUR HEADER -->
+        <div class="px-8 py-7 md:px-12 sticky top-0 bg-[#0F1115]/85 backdrop-blur-2xl z-20 flex justify-between items-center border-b border-appborder">
             <div class="flex items-center gap-6">
-                <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-all active:scale-95 text-xs flex items-center gap-2 font-bold tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
+                <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-all text-xs flex items-center gap-2 font-bold tracking-widest bg-white/5 px-4 py-2.5 rounded-full border border-white/5 hover:bg-white/10 active:scale-95">
                     <i class="fa-solid fa-arrow-left text-[10px]"></i> LOBBY
                 </button>
             </div>
             
-            <!-- Contextual Branding Segment -->
-            <div class="flex items-center gap-3">
-                <span class="h-2 w-2 rounded-full bg-appaccent shadow-[0_0_10px_#9DFF00]"></span>
-                <h2 class="text-sm md:text-base font-black tracking-widest uppercase text-white font-apple">Analytic & QC</h2>
+            <div class="flex items-center gap-3 bg-white/5 border border-white/5 px-5 py-2 rounded-full">
+                <span class="h-2 w-2 rounded-full bg-appaccent shadow-[0_0_12px_#9DFF00] animate-pulse"></span>
+                <h2 class="text-xs md:text-sm font-black tracking-[0.2em] uppercase text-white font-apple">Analytic & QC Engine</h2>
             </div>
 
-            <button onclick="loadAnalytics()" class="h-9 w-9 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white hover:text-appaccent hover:bg-white/10 transition-all active:scale-90">
+            <button onclick="loadAnalytics()" class="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white hover:text-appaccent hover:bg-white/10 transition-all hover:rotate-45 active:scale-90" title="Sync Live Metrics">
                 <i class="fa-solid fa-rotate-right text-sm" id="sync-icon"></i>
             </button>
         </div>
 
-        <!-- DASHBOARD HUB CONTENT -->
-        <div class="p-6 md:p-10 space-y-8 container mx-auto">
+        <!-- MACRO-WHITESPACE WRAPPER CONTAINER -->
+        <div class="p-8 md:p-12 space-y-12 container mx-auto">
             
-            <!-- TOP METRICS HUB (Premium Bento Architecture Layout) -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- BENTO BLOCK GRID METRICS HUD -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 
-                <!-- Metric 1: SKU Engine Summary -->
-                <div class="bg-appcard border border-appborder p-6 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-white/10 transition-all">
+                <!-- Metric 1: SKU Overview -->
+                <div class="bg-appcard border border-appborder p-8 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-appborderhover transition-all duration-300">
                     <div>
-                        <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Total Monitored SKU</p>
-                        <p id="stat-sku" class="text-5xl font-black text-white mt-4 tracking-tight font-apple">0</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Total Active SKU</p>
+                        <p id="stat-sku" class="text-6xl font-black text-white mt-4 tracking-tight font-apple transition-all group-hover:text-appaccent">0</p>
                     </div>
-                    <div class="mt-6 flex items-center justify-between text-xs text-gray-500 font-medium">
-                        <span>Active catalog variants</span>
-                        <i class="fa-solid fa-box-open text-white/10 text-xl group-hover:text-appaccent/20 transition-colors"></i>
+                    <div class="mt-8 flex items-center justify-between text-xs text-gray-500 font-medium border-t border-white/5 pt-4">
+                        <span>Database variants</span>
+                        <i class="fa-solid fa-box text-white/5 text-2xl group-hover:text-appaccent/10 transition-colors"></i>
                     </div>
                 </div>
 
                 <!-- Metric 2: DC Hub Coverage -->
-                <div class="bg-appcard border border-appborder p-6 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-white/10 transition-all">
+                <div class="bg-appcard border border-appborder p-8 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-appborderhover transition-all duration-300">
                     <div>
                         <p class="text-[10px] uppercase font-bold text-appaccent tracking-widest">DC Terpantau</p>
-                        <p id="stat-dc" class="text-5xl font-black text-white mt-4 tracking-tight font-apple">0</p>
+                        <p id="stat-dc" class="text-6xl font-black text-white mt-4 tracking-tight font-apple transition-all group-hover:text-appaccent">0</p>
                     </div>
-                    <div class="mt-6 flex items-center justify-between text-xs text-gray-500 font-medium">
-                        <span>Regional network operational</span>
-                        <i class="fa-solid fa-network-wired text-white/10 text-xl group-hover:text-appaccent/20 transition-colors"></i>
+                    <div class="mt-8 flex items-center justify-between text-xs text-gray-500 font-medium border-t border-white/5 pt-4">
+                        <span>Regional operations</span>
+                        <i class="fa-solid fa-server text-white/5 text-2xl group-hover:text-appaccent/10 transition-colors"></i>
                     </div>
                 </div>
 
-                <!-- Metric 3: Fast Summary Action View -->
-                <div class="md:col-span-2 bg-appcard border border-appborder p-6 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-white/10 transition-all">
+                <!-- Metric 3: Live System Diagnostics Overview -->
+                <div class="md:col-span-2 bg-appcard border border-appborder p-8 rounded-4xl flex flex-col justify-between relative overflow-hidden group hover:border-appborderhover transition-all duration-300">
                     <div class="flex justify-between items-start">
                         <div>
-                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">System Diagnosis Status</p>
-                            <h3 class="text-xl font-black text-white mt-2 leading-snug">Traceability Matrix & Logistics Analytics</h3>
+                            <p class="text-[10px] uppercase font-bold text-gray-500 tracking-widest">Logistics Analytics Platform</p>
+                            <h3 class="text-2xl font-black text-white mt-3 leading-snug tracking-tight">Traceability Matrix & Real-time Buffer Diagnostics</h3>
                         </div>
-                        <span class="text-[9px] font-black tracking-widest bg-appaccent/10 text-appaccent border border-appaccent/20 px-2.5 py-1 rounded-full uppercase">LIVE</span>
+                        <span class="text-[9px] font-black tracking-widest bg-appaccent/10 text-appaccent border border-appaccent/20 px-3 py-1 rounded-full uppercase">LIVE MATRIX</span>
                     </div>
-                    <p class="text-xs text-gray-400 font-medium mt-2 max-w-sm">Automated system diagnostics mapping distribution centers analytics, buffer management, and batch expiration tracking.</p>
+                    <p class="text-xs text-gray-400 font-medium mt-4 max-w-md leading-relaxed">Automated telemetry tracking target demand, safety metrics, distribution buffer management, and strict chronological batch aging diagnostics.</p>
                 </div>
             </div>
 
-            <!-- CORE DATA WORKSPACE MATRIX -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- MAIN INDUSTRIAL WORKSPACE METRICS -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                 
-                <!-- LEFT DOCK WORKSPACE: BATCH INTEGRATION (7 Columns) -->
-                <div class="lg:col-span-7 space-y-6">
+                <!-- LEFT STREAM WORKSPACE: ADVANCED BATCH CONTROLS (7 Columns) -->
+                <div class="lg:col-span-7 space-y-8">
                     
-                    <!-- Contextual Indicator Box -->
-                    <div class="bg-appcard border border-appborder p-6 rounded-4xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="bg-appcard border border-appborder p-8 rounded-4xl flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                         <div>
-                            <h4 class="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                <span class="h-2 w-2 rounded-full bg-apporange animate-pulse"></span>
-                                TRACEABILITY ENGINE
+                            <h4 class="text-xs font-black text-white uppercase tracking-[0.15em] flex items-center gap-2.5">
+                                <span class="h-2 w-2 rounded-full bg-apporange animate-ping"></span>
+                                CHRONOLOGICAL TRACEABILITY ENGINE
                             </h4>
-                            <p class="text-xs text-gray-400 mt-1.5 font-medium">Monitoring engine for batch life spans and localized distribution inventory age matrix.</p>
+                            <p class="text-xs text-gray-400 mt-2 font-medium leading-relaxed">Real-time inventory assessment sorting current operational batches based on remaining legal market lifespan constraints.</p>
                         </div>
                     </div>
                     
-                    <!-- CRITICAL VS SAFE SWITCH CONTROLS -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button type="button" onclick="toggleBatchGroup('crit')" class="bg-appcard border border-appborder p-6 rounded-4xl text-left btn-tactile group relative overflow-hidden hover:border-appred/30 transition-all">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Critical Block (&lt;= 3 Bln)</p>
+                    <!-- HIGH-INTERACTIVE ACCORDION BUTTON SYSTEM WITH HOVER STATES -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <button type="button" onclick="toggleBatchGroup('crit')" class="bg-appcard border border-appborder p-7 rounded-4xl text-left btn-tactile group relative overflow-hidden focus:outline-none">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 transition-colors group-hover:text-appred">Critical Lifecycle (&lt;= 3 Bln)</p>
                             <div class="flex items-baseline justify-between">
-                                <p id="stat-grade-crit" class="text-4xl font-black text-appred tracking-tight font-apple">0</p>
-                                <span class="h-8 w-8 rounded-full bg-appred/10 border border-appred/20 flex items-center justify-center text-appred">
+                                <p id="stat-grade-crit" class="text-5xl font-black text-appred tracking-tight font-apple">0</p>
+                                <span class="h-9 w-9 rounded-full bg-appred/5 border border-appred/10 flex items-center justify-center text-appred group-hover:bg-appred/20 transition-all">
                                     <i class="fa-solid fa-chevron-up text-[10px]" id="icon-crit"></i>
                                 </span>
                             </div>
-                            <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-bold text-gray-500 group-hover:text-appred transition-colors">
-                                <span>Inspect Grid</span>
-                                <i class="fa-solid fa-arrow-right"></i>
+                            <div class="mt-6 pt-5 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-black text-gray-500 group-hover:text-white transition-colors">
+                                <span>Inspect Pipeline</span>
+                                <i class="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
                             </div>
                         </button>
 
-                        <button type="button" onclick="toggleBatchGroup('safe')" class="bg-appcard border border-appborder p-6 rounded-4xl text-left btn-tactile group relative overflow-hidden hover:border-appgreen/30 transition-all">
-                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">Safe Inventory (&gt; 3 Bln)</p>
+                        <button type="button" onclick="toggleBatchGroup('safe')" class="bg-appcard border border-appborder p-7 rounded-4xl text-left btn-tactile group relative overflow-hidden focus:outline-none">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 transition-colors group-hover:text-appgreen">Safe Lifecycle (&gt; 3 Bln)</p>
                             <div class="flex items-baseline justify-between">
-                                <p id="stat-grade-safe" class="text-4xl font-black text-appgreen tracking-tight font-apple">0</p>
-                                <span class="h-8 w-8 rounded-full bg-appgreen/10 border border-appgreen/20 flex items-center justify-center text-appgreen">
+                                <p id="stat-grade-safe" class="text-5xl font-black text-appgreen tracking-tight font-apple">0</p>
+                                <span class="h-9 w-9 rounded-full bg-appgreen/5 border border-appgreen/10 flex items-center justify-center text-appgreen group-hover:bg-appgreen/20 transition-all">
                                     <i class="fa-solid fa-chevron-down text-[10px]" id="icon-safe"></i>
                                 </span>
                             </div>
-                            <div class="mt-4 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-bold text-gray-500 group-hover:text-appgreen transition-colors">
-                                <span>Inspect Grid</span>
-                                <i class="fa-solid fa-arrow-right"></i>
+                            <div class="mt-6 pt-5 border-t border-white/5 flex items-center justify-between text-[10px] uppercase tracking-widest font-black text-gray-500 group-hover:text-white transition-colors">
+                                <span>Inspect Pipeline</span>
+                                <i class="fa-solid fa-arrow-right-long transition-transform group-hover:translate-x-1"></i>
                             </div>
                         </button>
                     </div>
 
-                    <!-- DATA STREAM OUTPUT LAYER -->
-                    <div id="group-crit" class="space-y-4 pt-2"></div>
-                    <div id="group-safe" class="space-y-4 pt-2 hidden-tab"></div>
+                    <!-- ASYNC PIPELINE STREAM ENGINE LAYER -->
+                    <div id="group-crit" class="space-y-5 pt-2"></div>
+                    <div id="group-safe" class="space-y-5 pt-2 hidden-tab"></div>
                 </div>
 
-                <!-- RIGHT DOCK WORKSPACE: HEALTH ANALYSIS SYSTEM (5 Columns) -->
-                <div class="lg:col-span-5 space-y-8">
+                <!-- RIGHT STREAM WORKSPACE: PREMIUM CONTRAST MATRIX (5 Columns) -->
+                <div class="lg:col-span-5 space-y-10">
                     
-                    <!-- HIGH CONTRAST BLOCK: INVENTORY QUALITY MANAGEMENT -->
-                    <div class="bg-appcontrast text-black rounded-4xl border border-white/10 overflow-hidden shadow-2xl">
-                        <div class="bg-black/[0.02] px-6 py-5 border-b border-black/[0.06] flex justify-between items-center">
-                            <h4 class="text-xs font-black text-black uppercase tracking-widest flex items-center gap-2">
-                                <i class="fa-solid fa-square-poll-vertical text-sm text-black/70"></i> 
-                                INVENTORY HEALTH MATRIX
+                    <!-- HIGH CONTRAST BLOCK: INVENTORY STOCK HEALTH MATRIX -->
+                    <div class="bg-appcontrast text-black rounded-4xl border border-white/10 overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] transition-all">
+                        <div class="bg-black/[0.02] px-7 py-6 border-b border-black/[0.06] flex justify-between items-center">
+                            <h4 class="text-xs font-black text-black uppercase tracking-widest flex items-center gap-2.5">
+                                <i class="fa-solid fa-chart-bar text-base text-black/60"></i> 
+                                STOCK HEALTH INDEX
                             </h4>
+                            <span class="text-[8px] font-black bg-black text-white px-2.5 py-1 rounded-md tracking-widest uppercase">QC READOUT</span>
                         </div>
                         
                         <div class="overflow-x-auto">
-                            <div class="min-w-[400px] md:min-w-0">
-                                <!-- Table Head Structure -->
-                                <div class="grid grid-cols-5 gap-2 px-6 py-4 text-[9px] text-black/50 font-black uppercase tracking-widest border-b border-black/[0.05] text-center">
+                            <div class="min-w-[420px] md:min-w-0">
+                                <!-- Structural Alignment Table Header -->
+                                <div class="grid grid-cols-5 gap-2 px-7 py-4 text-[9px] text-black/40 font-black uppercase tracking-widest border-b border-black/[0.04] text-center">
                                     <div class="text-left">NAMA SKU</div>
                                     <div>AVG 3M</div>
-                                    <div id="th-forecast" class="text-black/80 font-bold">FCST</div>
-                                    <div id="th-buffer" class="text-appred font-bold">BUFF</div>
+                                    <div id="th-forecast" class="text-black/80 font-extrabold">FCST</div>
+                                    <div id="th-buffer" class="text-appred font-extrabold">BUFF</div>
                                     <div>STATUS</div>
                                 </div>
-                                <!-- Target Endpoint Injection Structure -->
-                                <div id="forecast-container" class="px-4 pb-4 divide-y divide-black/[0.04]"></div>
+                                <!-- Script-generated Container Area -->
+                                <div id="forecast-container" class="px-5 pb-5 divide-y divide-black/[0.04]"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- DISTRIBUTION NETWORK MONITOR ENGINE -->
-                    <div class="space-y-5">
+                    <!-- REVISIONED DC DIAGNOSE BLOCK -->
+                    <div class="space-y-6">
                         <div class="flex items-center justify-between px-2">
-                            <h4 class="text-xs font-black text-white uppercase tracking-[0.2em]">DC Diagnose Stream</h4>
-                            <span class="h-2 w-2 rounded-full bg-appaccent animate-pulse"></span>
+                            <h4 class="text-xs font-black text-white uppercase tracking-[0.2em] text-gray-400">Network Distribution Feed</h4>
+                            <div class="flex gap-1">
+                                <span class="h-1.5 w-1.5 rounded-full bg-white/20"></span>
+                                <span class="h-1.5 w-1.5 rounded-full bg-white/20"></span>
+                                <span class="h-1.5 w-1.5 rounded-full bg-appaccent animate-pulse"></span>
+                            </div>
                         </div>
-                        <div id="diagnosa-container" class="grid grid-cols-1 gap-4"></div>
+                        <div id="diagnosa-container" class="grid grid-cols-1 gap-5"></div>
                     </div>
 
                 </div>
@@ -216,7 +235,7 @@
         </div>
     </div>
 
-    <!-- CORE TRANSACTION LOGIC SYSTEM -->
+    <!-- CORE INTERACTION AND ASYNC DATA LOGIC INTERACTION PLATFORM -->
     <script>
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
 
@@ -227,12 +246,26 @@
 
         function updateMonthHeaders() {
             const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]; const d = new Date();
-            document.getElementById('th-buffer').innerHTML = `BUFFER<br><span class="text-[8px] font-normal">(${months[d.getMonth()]})</span>`; 
-            document.getElementById('th-forecast').innerHTML = `FCST<br><span class="text-[8px] font-normal">(${months[(d.getMonth() + 1) % 12]})</span>`;
+            document.getElementById('th-buffer').innerHTML = `BUFFER<br><span class="text-[8px] font-normal tracking-wide">(${months[d.getMonth()]})</span>`; 
+            document.getElementById('th-forecast').innerHTML = `FCST<br><span class="text-[8px] font-normal tracking-wide">(${months[(d.getMonth() + 1) % 12]})</span>`;
         }
 
-        function getSkel(count, isList=false) { 
-            return Array(count).fill(isList ? `<div class="skeleton-box rounded-3xl h-36 w-full mb-4 border border-white/5"></div>` : `<div class="skeleton-box rounded-xl h-12 w-full mb-2"></div>`).join(''); 
+        // Vary & Enhance Level 3: Skeleton UI Blocks Injection Generator
+        function getPremiumSkeleton(count, isLargeCard=false) { 
+            if(isLargeCard) {
+                return Array(count).fill(`
+                    <div class="skeleton-pulse-card rounded-4xl p-6 h-48 w-full mb-4 border border-white/5 flex flex-col justify-between">
+                        <div>
+                            <div class="h-3 bg-white/5 rounded-full w-1/4 mb-4"></div>
+                            <div class="h-6 bg-white/5 rounded-full w-1/2"></div>
+                        </div>
+                        <div class="h-10 bg-white/5 rounded-2xl w-full"></div>
+                    </div>
+                `).join('');
+            }
+            return Array(count).fill(`
+                <div class="skeleton-pulse-card rounded-xl h-12 w-full mb-2"></div>
+            `).join(''); 
         }
 
         function toggleBatchGroup(type) {
@@ -250,8 +283,11 @@
             const fCont = document.getElementById('forecast-container'); const dCont = document.getElementById('diagnosa-container'); 
             const contCrit = document.getElementById('group-crit'); const contSafe = document.getElementById('group-safe');
             
-            fCont.innerHTML = getSkel(5); dCont.innerHTML = getSkel(3, true); 
-            contCrit.innerHTML = getSkel(2, true); contSafe.innerHTML = getSkel(2, true);
+            // Render Skeleton Loaders dynamically across the dashboard infrastructure
+            fCont.innerHTML = getPremiumSkeleton(5); 
+            dCont.innerHTML = getPremiumSkeleton(3, true); 
+            contCrit.innerHTML = getPremiumSkeleton(2, true); 
+            contSafe.innerHTML = getPremiumSkeleton(2, true);
             
             try {
                 const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
@@ -261,7 +297,7 @@
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) })
                 ]);
                 
-                // 1. Forecast Buffer Module Interface Injection
+                // 1. Target Forecast Processing Block Module
                 fCont.innerHTML = ''; let skuCount = 0;
                 if(reqBuffer.status === 'fulfilled') {
                     let r = await reqBuffer.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
@@ -270,23 +306,22 @@
                         if(!sku || String(sku).includes("NAMA SKU") || String(sku).includes("col_")) return;
                         const st = String(row.col_6 || vals[5] || ""); skuCount++;
                         
-                        // Contrast Block UI Highlighting Context
                         const indicatorDot = st.includes("CRITICAL") 
-                            ? '<span class="h-2 w-2 rounded-full bg-appred inline-block shadow-[0_0_6px_#FF453A]"></span>' 
+                            ? '<span class="h-2 w-2 rounded-full bg-appred inline-block shadow-[0_0_8px_#FF453A] animate-pulse"></span>' 
                             : '<span class="h-2 w-2 rounded-full bg-appgreen inline-block"></span>';
                             
                         fCont.innerHTML += `
-                        <div class="grid grid-cols-5 gap-2 items-center py-3.5 border-b border-black/[0.04] text-[11px] text-center font-apple text-black/90 animate-fade" style="animation-delay:${idx*25}ms; opacity:0">
+                        <div class="grid grid-cols-5 gap-2 items-center py-4 border-b border-black/[0.03] text-[11px] text-center font-apple text-black/80 hover:bg-black/[0.01] transition-colors rounded-lg px-2 animate-premium-fade" style="animation-delay:${idx*20}ms; opacity:0">
                             <div class="font-bold text-left text-black truncate">${sku}</div>
-                            <div class="text-black/50 font-medium">${Math.round(Number(row.col_3||vals[2]||0))}</div>
-                            <div class="font-bold">${Math.round(Number(row.col_4||vals[3]||0))}</div>
-                            <div class="font-extrabold text-appred">${Math.round(Number(row.col_5||vals[4]||0))}</div>
+                            <div class="text-black/40 font-medium">${Math.round(Number(row.col_3||vals[2]||0))}</div>
+                            <div class="font-bold text-black/90">${Math.round(Number(row.col_4||vals[3]||0))}</div>
+                            <div class="font-black text-appred">${Math.round(Number(row.col_5||vals[4]||0))}</div>
                             <div class="flex justify-center">${indicatorDot}</div>
                         </div>`;
                     });
                 } document.getElementById('stat-sku').innerText = skuCount;
 
-                // 2. Traceability Engine Group Processing System
+                // 2. Complex Traceability Architecture Pipeline Processing
                 let cCrit=0, cSafe=0;
                 let htmlCrit = ""; let htmlSafe = "";
                 
@@ -314,11 +349,9 @@
                         }
                         
                         let isCritical = sisaBulan <= 3;
-                        let cardBg = "bg-appcard";
-                        let borderCol = "border-appborder hover:border-white/10";
                         let badgeBorder = isCritical ? "bg-appred/10 text-appred border-appred/20" : "bg-appgreen/10 text-appgreen border-appgreen/20";
                         let warningText = sisaBulan <= 0 ? "EXPIRED / MATI" : `Sisa ${sisaBulan} Bulan`;
-                        let locChipBg = isCritical ? "bg-appred text-white" : "bg-appgreen text-black font-extrabold";
+                        let locChipBg = isCritical ? "bg-appred text-white shadow-[0_4px_10px_rgba(255,69,58,0.25)]" : "bg-appgreen text-black font-extrabold shadow-[0_4px_10px_rgba(50,215,75,0.2)]";
 
                         let skusInBatch = [];
                         if(Number(row.NKA || row.nka || 0) > 0) skusInBatch.push("NKA");
@@ -328,35 +361,35 @@
                         if(Number(row.NKACH || row.nkach || 0) > 0) skusInBatch.push("NKACH");
 
                         let skuHtml = skusInBatch.length > 0 
-                            ? `<div class="flex flex-wrap gap-1.5 mt-2">${skusInBatch.map(s => `<span class="bg-white/5 text-white/80 text-[9px] px-2.5 py-1 rounded-md font-bold tracking-widest border border-white/5">${s}</span>`).join('')}</div>`
-                            : `<span class="text-[9px] text-gray-500 italic mt-2 block">Varian tidak tercatat</span>`;
+                            ? `<div class="flex flex-wrap gap-1.5 mt-2.5">${skusInBatch.map(s => `<span class="bg-white/5 text-white/90 text-[9px] px-3 py-1.5 rounded-lg font-bold tracking-widest border border-white/5 group-hover:bg-white/10 transition-colors">${s}</span>`).join('')}</div>`
+                            : `<span class="text-[9px] text-gray-600 italic mt-2.5 block">Varian tidak tercatat</span>`;
 
                         let locs = [];
                         logData.forEach(l => { if((l.BATCHES || l.batches || "").includes(batchName) && l.DC && !locs.includes(l.DC)) locs.push(l.DC); });
-                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-2.5">${locs.map(dc => `<span class="${locChipBg} text-[9px] px-2.5 py-1 rounded-md tracking-wider uppercase font-bold">${dc}</span>`).join('')}</div>` : `<span class="text-[9px] text-gray-500 italic mt-2.5 block">Belum ada sebaran di DC</span>`;
+                        let locH = locs.length ? `<div class="flex flex-wrap gap-1.5 mt-3">${locs.map(dc => `<span class="${locChipBg} text-[9px] px-3 py-1.5 rounded-lg tracking-wider uppercase font-bold transition-transform duration-300 group-hover:scale-105">${dc}</span>`).join('')}</div>` : `<span class="text-[9px] text-gray-600 italic mt-3 block">Belum ada sebaran di DC</span>`;
 
                         let cardHtml = `
-                        <div class="${cardBg} p-6 rounded-4xl border ${borderCol} flex flex-col justify-between transition-all shadow-lg animate-fade" style="animation-delay:${idx*25}ms; opacity:0">
+                        <div class="bg-appcard p-7 rounded-4xl border border-appborder hover:border-appborderhover flex flex-col justify-between transition-all duration-300 group hover:-translate-y-1 shadow-xl animate-premium-fade" style="animation-delay:${idx*20}ms; opacity:0">
                             <div>
-                                <div class="flex justify-between items-start gap-4 mb-2">
+                                <div class="flex justify-between items-start gap-4 mb-3">
                                     <div>
-                                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Nama Batch</p>
-                                        <h4 class="font-black text-xl text-white uppercase tracking-tight mt-0.5">${batchName}</h4>
+                                        <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Batch Number Reference</p>
+                                        <h4 class="font-black text-xl text-white uppercase tracking-tight mt-1 transition-colors group-hover:text-appaccent">${batchName}</h4>
                                     </div>
-                                    <div class="px-3 py-1.5 rounded-full border ${badgeBorder} text-[10px] font-bold uppercase tracking-wider">
+                                    <div class="px-3 py-1.5 rounded-full border ${badgeBorder} text-[10px] font-black uppercase tracking-wider bg-black/20">
                                         ${warningText}
                                     </div>
                                 </div>
-                                <p class="text-[10px] text-gray-400 font-medium tracking-wide mb-5">Expired Date: <span class="text-white font-semibold">${expDateStr}</span></p>
+                                <p class="text-[10px] text-gray-400 font-medium tracking-wide mb-6">Maturity Deadline: <span class="text-white font-semibold">${expDateStr}</span></p>
                                 
-                                <div class="mb-5">
-                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">📦 Varian SKU</p>
+                                <div class="mb-6">
+                                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">📦 Associated SKU Profiles</p>
                                     ${skuHtml}
                                 </div>
                             </div>
 
-                            <div class="border-t border-white/5 pt-4 mt-2">
-                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">📍 LOKASI SEBARAN SAAT INI</p>
+                            <div class="border-t border-white/5 pt-5 mt-3">
+                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">📍 Structural Location Spread Network</p>
                                 ${locH}
                             </div>
                         </div>`;
@@ -368,12 +401,12 @@
                         }
                     });
                     
-                    contCrit.innerHTML = htmlCrit || `<div class="p-8 text-center border border-dashed border-appborder rounded-4xl bg-white/[0.01]"><p class="text-gray-400 font-medium text-xs uppercase tracking-widest">✨ Zero Critical Batches detected</p></div>`;
-                    contSafe.innerHTML = htmlSafe || `<div class="p-8 text-center border border-dashed border-appborder rounded-4xl bg-white/[0.01]"><p class="text-gray-400 font-medium text-xs uppercase tracking-widest">No Safe Batches Active</p></div>`;
+                    contCrit.innerHTML = htmlCrit || `<div class="p-10 text-center border border-dashed border-appborder rounded-4xl bg-white/[0.01]"><p class="text-gray-500 font-medium text-xs uppercase tracking-widest">✨ Zero Critical Lifecycles Isolated</p></div>`;
+                    contSafe.innerHTML = htmlSafe || `<div class="p-10 text-center border border-dashed border-appborder rounded-4xl bg-white/[0.01]"><p class="text-gray-500 font-medium text-xs uppercase tracking-widest">No Operational Lifecycles Active</p></div>`;
                 }
                 document.getElementById('stat-grade-crit').innerText = cCrit; document.getElementById('stat-grade-safe').innerText = cSafe;
 
-                // 3. DC Networks Diagnosis Integration Layer
+                // 3. DC Telemetry Diagnostics Streams Infrastructure
                 dCont.innerHTML = ''; let dcCount = 0;
                 if(reqDiag.status === 'fulfilled') {
                     let r = await reqDiag.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
@@ -386,23 +419,23 @@
                         else if(res.includes("ABOVE")||res.includes("SAFE")) badgeColor = "bg-appgreen/10 text-appgreen border-appgreen/20";
                         
                         dCont.innerHTML += `
-                        <div class="bg-appcard p-6 rounded-4xl border border-appborder hover:border-white/10 transition-all animate-fade" style="animation-delay:${idx*25}ms; opacity:0">
-                            <div class="flex justify-between items-center gap-4 mb-4">
-                                <h4 class="text-base font-black text-white truncate max-w-[180px]">${dc}</h4>
-                                <p class="text-[9px] font-bold ${badgeColor} border px-2.5 py-1 rounded-full uppercase tracking-wider">${res}</p>
+                        <div class="bg-appcard p-7 rounded-4xl border border-appborder hover:border-appborderhover transition-all duration-300 group hover:-translate-y-1 shadow-lg animate-premium-fade" style="animation-delay:${idx*20}ms; opacity:0">
+                            <div class="flex justify-between items-center gap-4 mb-5">
+                                <h4 class="text-base font-black text-white truncate max-w-[200px] transition-colors group-hover:text-appaccent">${dc}</h4>
+                                <p class="text-[9px] font-black ${badgeColor} border px-3 py-1.5 rounded-full uppercase tracking-wider bg-black/20">${res}</p>
                             </div>
                             
-                            <div class="grid grid-cols-3 text-center bg-black/30 border border-white/5 p-4 rounded-3xl gap-2">
+                            <div class="grid grid-cols-3 text-center bg-black/40 border border-white/5 p-4 rounded-3xl gap-2 shadow-inner">
                                 <div class="border-r border-white/5">
-                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1">Fail</p>
+                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">Fail Matrix</p>
                                     <p class="text-sm font-black text-appred font-apple">${row.failPct||Math.round((row.col_4||0)*100)}%</p>
                                 </div>
                                 <div class="border-r border-white/5">
-                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1">Under</p>
+                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">Under Buffer</p>
                                     <p class="text-sm font-black text-apporange font-apple">${row.moqPct||Math.round((row.col_6||0)*100)}%</p>
                                 </div>
                                 <div>
-                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1">Above</p>
+                                    <p class="text-[8px] text-gray-500 font-bold uppercase tracking-wider mb-1.5">Above Target</p>
                                     <p class="text-sm font-black text-appgreen font-apple">${row.abovePct||Math.round((row.col_8||0)*100)}%</p>
                                 </div>
                             </div>
