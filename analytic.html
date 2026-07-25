@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FFI - Analytic & QC (Optimized Layout)</title>
+    <title>FFI - Analytic & QC</title>
     <link rel="icon" type="image/png" href="./LOGO FFI.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -64,10 +64,9 @@
 </head>
 <body class="bg-[#0F1115] antialiased p-3 md:p-6">
 
-    <!-- FRAMEWORK CONTAINER -->
     <div class="w-full max-w-7xl bg-appbg min-h-screen relative flex flex-col mx-auto md:rounded-4xl md:border border-appborder overflow-hidden shadow-2xl pb-16">
         
-        <!-- HEADER BLUR RINGKAS -->
+        <!-- HEADER -->
         <div class="px-6 py-4 sticky top-0 bg-[#0F1115]/90 backdrop-blur-md z-20 flex justify-between items-center border-b border-appborder">
             <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white transition-all text-xs flex items-center gap-2 font-bold bg-white/5 px-3 py-2 rounded-full border border-white/5">
                 <i class="fa-solid fa-arrow-left text-[10px]"></i> LOBBY
@@ -83,18 +82,10 @@
             </button>
         </div>
 
-        <!-- DASHBOARD WORKSPACE -->
+        <!-- MAIN DASHBOARD -->
         <div class="p-4 md:p-6 space-y-6">
             
-            <!-- SUB-HEADER CONTEXT INFO -->
-            <div class="bg-gradient-to-r from-appcard to-transparent border border-appborder p-4 rounded-3xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-                <div>
-                    <span class="text-[9px] font-black bg-appaccent/10 text-appaccent border border-appaccent/20 px-2 py-0.5 rounded uppercase tracking-widest">Live Diagnostics Matrix</span>
-                    <p class="text-xs text-gray-400 mt-1 font-medium">Automated telemetry tracking target demand, safety metrics, buffer management, and batch aging lifecycle.</p>
-                </div>
-            </div>
-
-            <!-- METRIC HUD (4 KOLOM RINGKAS HILANGKAN DESKRIPSI STATIS YANG MEMAKAN TEMPAT) -->
+            <!-- METRIC HUD STATS (Top Row) -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-appcard border border-appborder p-4 rounded-3xl group hover:border-appborderhover transition-all">
                     <p class="text-[9px] uppercase font-bold text-gray-500 tracking-wider">Total Active SKU</p>
@@ -129,28 +120,43 @@
                 </div>
             </div>
 
-            <!-- MID WORKSPACE GRIDS -->
+            <!-- LAYOUT GRIDS: Kiri (7 Kolom), Kanan (5 Kolom) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                <!-- KIRI: TRACEABILITY STREAM (7 Kolom) -->
-                <div class="lg:col-span-7 space-y-4">
-                    <div class="bg-appcard border border-appborder p-4 rounded-3xl flex justify-between items-center">
-                        <h4 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
-                            <span class="h-1.5 w-1.5 rounded-full bg-apporange animate-pulse"></span>
-                            Chronological Traceability Stream
-                        </h4>
-                        <!-- Switcher Tab Minimalis Penghemat Ruang Vertikal -->
-                        <div class="flex bg-white/5 p-0.5 rounded-lg border border-white/5 text-[10px] font-bold">
-                            <button onclick="switchTab('crit')" id="btn-tab-crit" class="px-3 py-1 rounded-md bg-appred/20 text-appred transition-all">Critical</button>
-                            <button onclick="switchTab('safe')" id="btn-tab-safe" class="px-3 py-1 rounded-md text-gray-400 transition-all">Safe</button>
-                        </div>
-                    </div>
+                <!-- SISI KIRI (7 Kolom): Traceability + DC Feed Langsung Di Bawahnya untuk Mengisi Ruang Kosong -->
+                <div class="lg:col-span-7 space-y-6">
                     
-                    <div id="group-crit" class="space-y-3"></div>
-                    <div id="group-safe" class="space-y-3 hidden-tab"></div>
+                    <!-- 1. BATCH CONTROLS -->
+                    <div class="space-y-3">
+                        <div class="bg-appcard border border-appborder p-4 rounded-3xl flex justify-between items-center">
+                            <h4 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                                <span class="h-1.5 w-1.5 rounded-full bg-apporange animate-pulse"></span>
+                                Chronological Traceability Stream
+                            </h4>
+                            <div class="flex bg-white/5 p-0.5 rounded-lg border border-white/5 text-[10px] font-bold">
+                                <button onclick="switchTab('crit')" id="btn-tab-crit" class="px-3 py-1 rounded-md bg-appred/20 text-appred transition-all">Critical</button>
+                                <button onclick="switchTab('safe')" id="btn-tab-safe" class="px-3 py-1 rounded-md text-gray-400 transition-all">Safe</button>
+                            </div>
+                        </div>
+                        
+                        <div id="group-crit" class="space-y-3"></div>
+                        <div id="group-safe" class="space-y-3 hidden-tab"></div>
+                    </div>
+
+                    <!-- 2. NETWORK DISTRIBUTION FEED (Pindah ke sini agar mengisi ruang kosong ke bawah secara horizontal) -->
+                    <div class="space-y-3 pt-2">
+                        <div class="flex items-center justify-between px-1">
+                            <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                                <i class="fa-solid fa-server text-appaccent"></i>
+                                Network Distribution Feed
+                            </h4>
+                        </div>
+                        <!-- Membuat layout DC otomatis melebar 2 kolom di area kiri ini -->
+                        <div id="diagnosa-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+                    </div>
                 </div>
 
-                <!-- KANAN: QUALITY STOCK HEALTH MATRIX (5 Kolom) -->
+                <!-- SISI KANAN (5 Kolom): Indeks Tabel Kesehatan Stok -->
                 <div class="lg:col-span-5">
                     <div class="bg-appcontrast text-black rounded-3xl border border-white/10 overflow-hidden shadow-lg">
                         <div class="bg-black/[0.02] px-4 py-3 border-b border-black/[0.06] flex justify-between items-center">
@@ -176,26 +182,12 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- BOTTOM FULL-WIDTH WORKSPACE: NETWORK DISTRIBUTION FEED -->
-            <div class="border-t border-appborder pt-6 space-y-4">
-                <div class="flex items-center justify-between px-1">
-                    <h4 class="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
-                        <i class="fa-solid fa-server text-appaccent"></i>
-                        Network Distribution Feed Telemetry
-                    </h4>
-                    <span class="text-[9px] text-gray-500 font-medium font-apple">Optimized Fluid Grid Dynamic</span>
-                </div>
-                
-                <!-- 30+ DC akan menyebar merata secara horizontal (bukan berbaris ke bawah) -->
-                <div id="diagnosa-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3"></div>
             </div>
-
         </div>
     </div>
 
-    <!-- CORE SAAS ENGINE DATA LOGIC INTERACTION -->
+    <!-- CORE INTERACTION DATA LOGIC -->
     <script>
         const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
 
@@ -230,10 +222,9 @@
         function getPremiumSkeleton(count, isLargeCard=false) { 
             if(isLargeCard) {
                 return Array(count).fill(`
-                    <div class="skeleton-pulse-card rounded-2xl p-4 h-28 w-full mb-1 flex flex-col justify-between">
+                    <div class="skeleton-pulse-card rounded-2xl p-4 h-24 w-full mb-1 flex flex-col justify-between">
                         <div class="h-3 bg-white/5 rounded w-1/4"></div>
-                        <div class="h-4 bg-white/5 rounded w-3/4"></div>
-                        <div class="h-6 bg-white/5 rounded-xl w-full"></div>
+                        <div class="h-5 bg-white/5 rounded-xl w-full"></div>
                     </div>
                 `).join('');
             }
@@ -249,8 +240,8 @@
             
             fCont.innerHTML = `<tr><td colspan="5" class="p-4">${getPremiumSkeleton(4)}</td></tr>`; 
             dCont.innerHTML = getPremiumSkeleton(4, true); 
-            contCrit.innerHTML = getPremiumSkeleton(2, true); 
-            contSafe.innerHTML = getPremiumSkeleton(2, true);
+            contCrit.innerHTML = getPremiumSkeleton(1, true); 
+            contSafe.innerHTML = getPremiumSkeleton(1, true);
             
             try {
                 const [reqBuffer, reqDiag, reqStock, reqLog] = await Promise.allSettled([ 
@@ -260,7 +251,7 @@
                     fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) })
                 ]);
                 
-                // 1. Target Forecast Processing Block Module
+                // 1. Indeks Stok
                 fCont.innerHTML = ''; let skuCount = 0;
                 if(reqBuffer.status === 'fulfilled') {
                     let r = await reqBuffer.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
@@ -284,7 +275,7 @@
                     });
                 } document.getElementById('stat-sku').innerText = skuCount;
 
-                // 2. Complex Traceability Architecture Pipeline Processing
+                // 2. Batch Processing
                 let cCrit=0, cSafe=0; let htmlCrit = ""; let htmlSafe = "";
                 let logData = [];
                 if(reqLog.status === 'fulfilled') { let r = await reqLog.value.json(); logData = Array.isArray(r) ? r[0].data || r : r.data; }
@@ -358,7 +349,7 @@
                 }
                 document.getElementById('stat-grade-crit').innerText = cCrit; document.getElementById('stat-grade-safe').innerText = cSafe;
 
-                // 3. Network Distribution Fluid Grid Telemetry
+                // 3. Network Distribution Render
                 dCont.innerHTML = ''; let dcCount = 0;
                 if(reqDiag.status === 'fulfilled') {
                     let r = await reqDiag.value.json(); let d = Array.isArray(r) ? r[0].data || r : r.data;
