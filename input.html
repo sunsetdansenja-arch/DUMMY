@@ -1,263 +1,300 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FFI - Input Operasional</title>
-    <link rel="icon" type="image/png" href="./LOGO FFI.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = { theme: { extend: { colors: { appbg: '#000000', appcard: '#1C1C1E', appinput: '#2C2C2E', appapplered: '#FF3B30', appappleblue: '#ADD8E6', appgreen: '#34C759' }, fontFamily: { 'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'] } } } }
-    </script>
-    <style>
-        body { background-color: #000000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-        .hidden-tab { display: none !important; }
-        input, select { background-color: #2C2C2E; border: 1.5px solid transparent; transition: all 0.25s; color: white; width: 100%; border-radius: 1.25rem; padding: 1.1rem 1.4rem; outline: none; font-weight: 600; font-size: 0.95rem; }
-        input:focus, select:focus { border-color: #FF3B30; background-color: #1C1C1E; }
-        .btn-tactile { transition: transform 0.1s; cursor: pointer; font-weight: 800; text-transform: uppercase; }
-        .btn-tactile:active { transform: scale(0.96); }
-        #toast { transform: translateY(-150%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .toast-show { transform: translateY(0) !important; }
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .sku-input { padding: 0 !important; background: transparent !important; border: none !important; text-align: center; font-weight: 900; }
-        @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(15px); } 100% { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeInUp 0.4s ease-out forwards; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>FFI - Input Operasional</title>
+<link rel="icon" type="image/png" href="./LOGO FFI.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="./theme.css">
+<script>
+tailwind.config = { theme: { extend: { colors: { appbg: '#14050B', appcard: 'rgba(255,255,255,0.06)', appinput: 'rgba(255,255,255,0.08)', appapplered: '#E11D48', appappleblue: '#FFB3C1', appgreen: '#4ADE80', appred: '#FF6B81' }, borderRadius: { '4xl': '2rem' }, fontFamily: { 'apple': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'] } } } }
+</script>
+<style>
+.sku-input { padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; text-align: center; font-weight: 900; }
+.sku-tile { display: block; padding: 1rem .5rem; border-radius: 1.25rem; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.10); text-align: center; cursor: text; transition: border-color .2s, background .2s; }
+.sku-tile:focus-within { border-color: #FF4D6A; background: rgba(255,77,106,.10); }
+.sku-tile label { display: block; font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #D3B4BD; margin-bottom: .25rem; }
+.form-section { font-size: .65rem; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #D3B4BD; display: flex; align-items: center; gap: .5rem; margin-bottom: .85rem; }
+.form-section::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.12); }
+.field-label { display: block; font-size: .62rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #B796A0; margin: 0 0 .35rem .25rem; }
+.dc-btn { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); color: #EBD3DA; font-size: .68rem; font-weight: 800; padding: 1.1rem .5rem; border-radius: 1rem; text-transform: uppercase; transition: all .15s; }
+.dc-btn:hover { background: #E11D48; color: #fff; border-color: #FF4D6A; }
+</style>
 </head>
-<body class="flex justify-center antialiased">
-    <datalist id="date-recom"></datalist>
-    <datalist id="recent-po-ids"></datalist>
+<body class="antialiased font-apple">
 
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2">
-        <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
+<datalist id="date-recom"></datalist>
+<datalist id="recent-po-ids"></datalist>
+
+<div id="toast" class="px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] border-2">
+  <span id="toast-icon">✅</span><span id="toast-msg">Success</span>
+</div>
+
+<!-- DC Modal -->
+<div id="modal-dc" class="fixed inset-0 z-[100] hidden-tab flex flex-col px-4 pt-10 pb-6" style="background: rgba(20,5,11,.82); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);">
+  <div class="w-full max-w-4xl mx-auto flex flex-col h-full">
+    <div class="flex justify-between items-center mb-4 gap-3">
+      <h3 class="font-black text-xl text-appneon-hi" style="color:#FF6B81">Pilih Nama DC</h3>
+      <button type="button" onclick="closeDCModal()" class="icon-btn btn-tactile" aria-label="Tutup">✕</button>
     </div>
+    <input type="text" id="dc-search" placeholder="Cari nama DC..." oninput="filterDC()" autocomplete="off" class="mb-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3 overflow-y-auto pb-10 flex-1 content-start" id="dc-grid"></div>
+  </div>
+</div>
 
-    <!-- DC Modal -->
-    <div id="modal-dc" class="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] hidden-tab flex flex-col px-4 pt-12 pb-6">
-        <div class="w-full max-w-4xl mx-auto flex flex-col h-full">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-white font-black text-2xl italic text-appapplered px-2">Pilih Nama DC</h3>
-                <button type="button" onclick="closeDCModal()" class="text-gray-400 bg-white/10 p-3 rounded-full btn-tactile">✕</button>
-            </div>
-            <div class="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3.5 overflow-y-auto pb-10 flex-1 px-2" id="dc-grid"></div>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a href="index.html" class="flex items-center gap-3">
+      <img src="./LOGO FFI.png" alt="Logo" onerror="this.style.display='none'" class="h-8 w-auto object-contain">
+      <span class="brand">Family<span>Food</span></span>
+    </a>
+    <nav class="nav-tabs" aria-label="Navigasi utama"><a href="index.html" class="nav-tab"><i class="fa-solid fa-house text-[11px]"></i>Lobby</a><a href="input.html" class="nav-tab active"><i class="fa-solid fa-pen-to-square text-[11px]"></i>Input</a><a href="analytic.html" class="nav-tab"><i class="fa-solid fa-chart-simple text-[11px]"></i>Analytic</a><a href="data.html" class="nav-tab"><i class="fa-solid fa-database text-[11px]"></i>Data</a><a href="report.html" class="nav-tab"><i class="fa-solid fa-file-pdf text-[11px]"></i>Laporan</a></nav>
+    <div class="w-10 md:hidden"></div>
+    <div class="hidden md:block w-24"></div>
+  </div>
+</header>
+
+<main class="page-wrap page-pad animate-fade" style="max-width: 56rem;">
+  <div class="mb-5">
+    <h1 class="page-title"><i class="fa-solid fa-pen-to-square text-appneon mr-2" style="color:#FF4D6A"></i>Input Operasional</h1>
+    <p class="page-sub">Pilih jenis data, isi formulir, lalu simpan.</p>
+  </div>
+
+  <div class="seg mb-6">
+    <button type="button" onclick="switchForm('po')" id="btn-form-po" class="seg-btn active"><i class="fa-solid fa-file-invoice"></i> New PO</button>
+    <button type="button" onclick="switchForm('sales')" id="btn-form-sales" class="seg-btn"><i class="fa-solid fa-truck-fast"></i> Sales</button>
+    <button type="button" onclick="switchForm('stock')" id="btn-form-stock" class="seg-btn"><i class="fa-solid fa-boxes-stacked"></i> Stock</button>
+  </div>
+
+  <!-- FORM NEW PO -->
+  <form id="form-po" onsubmit="submitAction(event, 'insert_po')" class="glass-card p-5 md:p-7 space-y-6">
+    <div>
+      <p class="form-section">Informasi PO</p>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="col-span-2">
+          <span class="field-label">ID PO</span>
+          <input type="text" id="po-id" placeholder="CTH: JKT01..." required class="uppercase">
         </div>
+        <div>
+          <span class="field-label">Tanggal PO</span>
+          <input type="text" id="po-tanggal" list="date-recom" autocomplete="off" placeholder="dd/mm/yyyy" required>
+        </div>
+        <div>
+          <span class="field-label">Tanggal EXP</span>
+          <input type="text" id="po-exp" list="date-recom" autocomplete="off" placeholder="dd/mm/yyyy" required>
+        </div>
+        <div class="col-span-2">
+          <span class="field-label">DC Tujuan</span>
+          <div class="relative cursor-pointer btn-tactile" onclick="openDCModal('po-dc')">
+            <input type="text" id="po-dc" placeholder="PILIH NAMA DC" required readonly class="pointer-events-none uppercase" style="background: rgba(225,29,72,.16); border-color: rgba(255,77,106,.5); color:#FFC2CC;">
+            <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <div class="w-full max-w-md md:max-w-3xl bg-appbg min-h-screen relative flex flex-col mx-auto md:border-x border-white/5 pb-20">
-        <div class="px-6 py-5 sticky top-0 bg-[#000000]/92 backdrop-blur-xl z-20 flex justify-between items-center border-b border-white/5">
-            <button onclick="window.location.href='index.html'" class="text-gray-400 hover:text-white btn-tactile text-xs flex items-center gap-2">
-                <i class="fa-solid fa-chevron-left"></i> LOBBY
-            </button>
-            <h2 class="text-sm font-black text-white tracking-widest uppercase">Input Data</h2>
-            <div class="w-16"></div>
-        </div>
-
-        <div class="p-6 md:p-10 animate-fade">
-            <div class="flex bg-appcard p-1.5 rounded-2xl border border-white/7 mb-8">
-                <button type="button" onclick="switchForm('po')" id="btn-form-po" class="flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appapplered text-white">New PO</button>
-                <button type="button" onclick="switchForm('sales')" id="btn-form-sales" class="flex-1 py-3 rounded-xl text-xs font-extrabold uppercase text-gray-500 bg-transparent">Sales</button>
-                <button type="button" onclick="switchForm('stock')" id="btn-form-stock" class="flex-1 py-3 rounded-xl text-xs font-extrabold uppercase text-gray-500 bg-transparent">Stock</button>
-            </div>
-
-            <!-- FORM NEW PO -->
-            <form id="form-po" onsubmit="submitAction(event, 'insert_po')" class="space-y-6 bg-appcard p-6 rounded-4xl border border-white/7">
-                <div class="space-y-4">
-                    <input type="text" id="po-id" placeholder="ID PO (CTH: JKT01...)" required class="uppercase">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="po-tanggal" list="date-recom" autocomplete="off" placeholder="Tgl PO" required>
-                        <input type="text" id="po-exp" list="date-recom" autocomplete="off" placeholder="Tgl EXP" required>
-                        <div class="relative cursor-pointer btn-tactile col-span-2" onclick="openDCModal('po-dc')">
-                            <input type="text" id="po-dc" placeholder="PILIH NAMA DC" required readonly class="pointer-events-none uppercase bg-appapplered/10 text-appapplered">
-                        </div>
-                    </div>
-                </div>
-                <div class="pt-6 border-t border-white/5">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-4">Kuantitas PO (Ctn)</p>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKA</label><input type="number" id="po-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NDLH</label><input type="number" id="po-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NRD</label><input type="number" id="po-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NARR</label><input type="number" id="po-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="col-span-2 md:col-span-1 bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKACH</label><input type="number" id="po-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-appapplered text-white font-extrabold py-4 rounded-2xl btn-tactile mt-6">SUBMIT PO</button>
-            </form>
-
-            <!-- FORM SALES -->
-            <form id="form-sales" onsubmit="submitAction(event, 'insert_sales')" class="hidden-tab space-y-6 bg-appcard p-6 rounded-4xl border border-white/7">
-                <div class="space-y-4">
-                    <input type="text" id="sls-id" list="recent-po-ids" autocomplete="off" placeholder="ID PO DATABASE" required class="uppercase">
-                    
-                    <!-- PERBAIKAN: MANUAL INPUT + SUGGESTED CHIPS -->
-                    <div class="bg-black/40 p-5 rounded-3xl border border-white/5">
-                        <label class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-2 block">Tag Batch Pengiriman (Bisa > 1)</label>
-                        <input type="text" id="sls-batches" placeholder="Ketik manual atau klik pilihan di bawah..." required class="bg-appbg w-full rounded-2xl border border-white/10 outline-none focus:border-appappleblue uppercase text-sm">
-                        
-                        <p class="text-[8px] text-gray-600 font-bold italic mt-4 mb-2 uppercase tracking-widest">Saran Batch Tersedia di Gudang (Klik untuk pilih):</p>
-                        <div id="suggested-batches" class="flex flex-wrap gap-2">
-                            <p class="text-[10px] text-gray-500 italic">Memuat data batch...</p>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="pt-6 border-t border-white/5">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-4">Realisasi Sales (Ctn)</p>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKA</label><input type="number" id="sls-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NDLH</label><input type="number" id="sls-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NRD</label><input type="number" id="sls-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NARR</label><input type="number" id="sls-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="col-span-2 md:col-span-1 bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKACH</label><input type="number" id="sls-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-appappleblue text-black font-extrabold py-4 rounded-2xl btn-tactile mt-6">UPDATE SALES</button>
-            </form>
-
-            <!-- FORM STOCK -->
-            <form id="form-stock" onsubmit="submitAction(event, 'insert_stock')" class="hidden-tab space-y-6 bg-appcard p-6 rounded-4xl border border-white/7">
-                <div class="space-y-4">
-                    <input type="text" id="stk-tanggal" list="date-recom" autocomplete="off" placeholder="Tgl Produksi / Input" required>
-                    <input type="text" id="stk-nama-batch" autocomplete="off" placeholder="NAMA BATCH (Cth: B-JAN-01)" required class="uppercase">
-                    <input type="text" id="stk-tanggal-exp" list="date-recom" autocomplete="off" placeholder="TANGGAL EXPIRED BATCH" required>
-                </div>
-                <div class="pt-6 border-t border-white/5">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-4">Fisik Stock (Ctn)</p>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKA</label><input type="number" id="stk-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NDLH</label><input type="number" id="stk-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NRD</label><input type="number" id="stk-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NARR</label><input type="number" id="stk-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                        <div class="col-span-2 md:col-span-1 bg-black/50 p-4 rounded-3xl"><label class="text-[9px] text-gray-500 font-bold uppercase mb-1">NKACH</label><input type="number" id="stk-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-appgreen text-black font-extrabold py-4 rounded-2xl btn-tactile mt-6">UPDATE STOCK</button>
-            </form>
-        </div>
+    <div>
+      <p class="form-section">Kuantitas PO (Ctn)</p>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="sku-tile"><label for="po-nka">NKA</label><input type="number" id="po-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="po-ndlh">NDLH</label><input type="number" id="po-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="po-nrd">NRD</label><input type="number" id="po-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="po-narr">NARR</label><input type="number" id="po-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile col-span-2 md:col-span-1"><label for="po-nkach">NKACH</label><input type="number" id="po-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
+      </div>
     </div>
+    <button type="submit" class="btn-primary btn-tactile w-full py-4 text-sm">SUBMIT PO</button>
+  </form>
 
-    <script>
-        const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
-        const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
-        let targetDCInput = "";
+  <!-- FORM SALES -->
+  <form id="form-sales" onsubmit="submitAction(event, 'insert_sales')" class="hidden-tab glass-card p-5 md:p-7 space-y-6">
+    <div>
+      <p class="form-section">Referensi PO &amp; Batch</p>
+      <div class="space-y-3">
+        <div>
+          <span class="field-label">ID PO Database</span>
+          <input type="text" id="sls-id" list="recent-po-ids" autocomplete="off" placeholder="Ketik / pilih ID PO" required class="uppercase">
+        </div>
+        <div class="glass-flat p-4">
+          <span class="field-label" style="margin-left:0">Tag Batch Pengiriman (Bisa &gt; 1)</span>
+          <input type="text" id="sls-batches" placeholder="Ketik manual atau klik pilihan di bawah..." required class="uppercase text-sm">
+          <p class="text-[9px] text-gray-500 font-bold mt-4 mb-2 uppercase tracking-widest">Saran batch di gudang (klik untuk pilih)</p>
+          <div id="suggested-batches" class="flex flex-wrap gap-2">
+            <p class="text-[10px] text-gray-500 italic">Memuat data batch...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="form-section">Realisasi Sales (Ctn)</p>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="sku-tile"><label for="sls-nka">NKA</label><input type="number" id="sls-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="sls-ndlh">NDLH</label><input type="number" id="sls-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="sls-nrd">NRD</label><input type="number" id="sls-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="sls-narr">NARR</label><input type="number" id="sls-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile col-span-2 md:col-span-1"><label for="sls-nkach">NKACH</label><input type="number" id="sls-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
+      </div>
+    </div>
+    <button type="submit" class="btn-primary btn-tactile w-full py-4 text-sm">UPDATE SALES</button>
+  </form>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
-            initDates(); initDCPicker();
-            setTimeout(() => { loadPODataForSales(); loadBatchesForTagging(); }, 100);
-        });
+  <!-- FORM STOCK -->
+  <form id="form-stock" onsubmit="submitAction(event, 'insert_stock')" class="hidden-tab glass-card p-5 md:p-7 space-y-6">
+    <div>
+      <p class="form-section">Informasi Batch</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <span class="field-label">Tgl Produksi / Input</span>
+          <input type="text" id="stk-tanggal" list="date-recom" autocomplete="off" placeholder="dd/mm/yyyy" required>
+        </div>
+        <div>
+          <span class="field-label">Nama Batch</span>
+          <input type="text" id="stk-nama-batch" autocomplete="off" placeholder="CTH: B-JAN-01" required class="uppercase">
+        </div>
+        <div>
+          <span class="field-label">Tanggal Expired</span>
+          <input type="text" id="stk-tanggal-exp" list="date-recom" autocomplete="off" placeholder="dd/mm/yyyy" required>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="form-section">Fisik Stock (Ctn)</p>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="sku-tile"><label for="stk-nka">NKA</label><input type="number" id="stk-nka" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="stk-ndlh">NDLH</label><input type="number" id="stk-ndlh" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="stk-nrd">NRD</label><input type="number" id="stk-nrd" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile"><label for="stk-narr">NARR</label><input type="number" id="stk-narr" value="0" required class="sku-input w-full text-3xl text-white"></div>
+        <div class="sku-tile col-span-2 md:col-span-1"><label for="stk-nkach">NKACH</label><input type="number" id="stk-nkach" value="0" required class="sku-input w-full text-3xl text-white"></div>
+      </div>
+    </div>
+    <button type="submit" class="btn-primary btn-tactile w-full py-4 text-sm">UPDATE STOCK</button>
+  </form>
+</main>
 
-        function showToast(msg, isError = false) {
-            const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
-            t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[100] px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] transition-transform duration-300 border-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white shadow-[0_0_15px_rgba(52,199,89,0.3)]'}`;
-            t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
-        }
+<nav class="bottom-nav" aria-label="Navigasi utama"><a href="index.html" class="bn-item"><i class="fa-solid fa-house"></i>Lobby</a><a href="input.html" class="bn-item active"><i class="fa-solid fa-pen-to-square"></i>Input</a><a href="analytic.html" class="bn-item"><i class="fa-solid fa-chart-simple"></i>Analytic</a><a href="data.html" class="bn-item"><i class="fa-solid fa-database"></i>Data</a><a href="report.html" class="bn-item"><i class="fa-solid fa-file-pdf"></i>Laporan</a></nav>
 
-        async function sendApi(payload, btnElement = null, originalText = "") {
-            if(btnElement) { btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btnElement.classList.add('opacity-50', 'pointer-events-none'); }
-            try {
-                const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
-                if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
-                return Array.isArray(data) ? data[0] : data;
-            } catch(e) { if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); } return null; }
-        }
+<script>
+const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
+let targetDCInput = "";
 
-        function initDates() {
-            const dl = document.getElementById('date-recom'); dl.innerHTML = ''; const today = new Date();
-            for(let i=0; i<=5; i++) {
-                const d = new Date(today); d.setDate(d.getDate() - i);
-                dl.innerHTML += `<option value="${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}">`;
-            }
-        }
+document.addEventListener('DOMContentLoaded', () => {
+  if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+  initDates(); initDCPicker();
+  setTimeout(() => { loadPODataForSales(); loadBatchesForTagging(); }, 100);
+});
 
-        function initDCPicker() {
-            const grid = document.getElementById('dc-grid');
-            grid.innerHTML = DC_LIST.map(dc => `<button type="button" onclick="selectDC('${dc}')" class="bg-appcard border border-white/5 text-gray-300 text-[10px] font-extrabold py-5 rounded-2xl btn-tactile hover:text-appapplered uppercase hover:border-appapplered/50 transition-colors">${dc}</button>`).join('');
-        }
-        function openDCModal(id) { targetDCInput = id; document.getElementById('modal-dc').classList.remove('hidden-tab'); }
-        function closeDCModal() { document.getElementById('modal-dc').classList.add('hidden-tab'); }
-        function selectDC(dc) { document.getElementById(targetDCInput).value = dc; closeDCModal(); }
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; document.getElementById('toast-icon').innerText = isError ? '❌' : '✅';
+  t.className = `px-7 py-3 rounded-full font-extrabold text-sm flex items-center gap-3 w-max max-w-[90%] border-2 ${isError ? 'bg-[#3A0000] border-appred text-appred' : 'bg-appcard border-appgreen text-white'}`;
+  t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
+}
 
-        function switchForm(type) {
-            ['po', 'sales', 'stock'].forEach(id => document.getElementById('form-' + id).classList.add('hidden-tab'));
-            ['btn-form-po', 'btn-form-sales', 'btn-form-stock'].forEach(id => document.getElementById(id).className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase text-gray-500 bg-transparent transition-all");
-            
-            document.getElementById('form-' + type).classList.remove('hidden-tab');
-            const btn = document.getElementById('btn-form-' + type);
-            if(type === 'po') btn.className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appapplered text-white transition-all shadow-[0_0_15px_rgba(255,59,48,0.3)]";
-            if(type === 'sales') btn.className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appappleblue text-black transition-all shadow-[0_0_15px_rgba(173,216,230,0.3)]";
-            if(type === 'stock') btn.className = "flex-1 py-3 rounded-xl text-xs font-extrabold uppercase bg-appgreen text-black transition-all shadow-[0_0_15px_rgba(52,199,89,0.3)]";
-        }
+async function sendApi(payload, btnElement = null, originalText = "") {
+  if(btnElement) { btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btnElement.classList.add('opacity-50', 'pointer-events-none'); }
+  try {
+    const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
+    if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
+    return Array.isArray(data) ? data[0] : data;
+  } catch(e) { if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); } return null; }
+}
 
-        async function loadPODataForSales() {
-            const res = await sendApi({ action: "load_admin" });
-            if (res && res.status === "success" && res.data) {
-                const dl = document.getElementById('recent-po-ids'); dl.innerHTML = ''; let count = 0;
-                res.data.forEach(item => { if(item.ID && count < 20 && !String(item["PO NKA"]).includes("BATAL")) { dl.innerHTML += `<option value="${item.ID}">`; count++; } });
-            }
-        }
+function initDates() {
+  const dl = document.getElementById('date-recom'); dl.innerHTML = ''; const today = new Date();
+  for(let i=0; i<=5; i++) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    dl.innerHTML += `<option value="${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}">`;
+  }
+}
 
-        // PERBAIKAN: Fungsi loadBatch diubah menjadi Chips Clickable
-        async function loadBatchesForTagging() {
-            const res = await sendApi({ action: "get_db_stock" });
-            const cont = document.getElementById('suggested-batches');
-            
-            if (res) {
-                let rData = Array.isArray(res) ? (res[0].data || res) : (res.data || [res]);
-                cont.innerHTML = '';
-                let validBatches = [];
+function renderDCGrid(list) {
+  const grid = document.getElementById('dc-grid');
+  grid.innerHTML = list.length
+    ? list.map(dc => `<button type="button" onclick="selectDC('${dc}')" class="dc-btn btn-tactile">${dc}</button>`).join('')
+    : `<p class="col-span-full text-center text-gray-500 text-xs italic py-8">DC tidak ditemukan</p>`;
+}
+function initDCPicker() { renderDCGrid(DC_LIST); }
+function filterDC() {
+  const q = document.getElementById('dc-search').value.trim().toUpperCase();
+  renderDCGrid(DC_LIST.filter(dc => dc.includes(q)));
+}
+function openDCModal(id) {
+  targetDCInput = id;
+  document.getElementById('dc-search').value = ''; renderDCGrid(DC_LIST);
+  document.getElementById('modal-dc').classList.remove('hidden-tab');
+  setTimeout(() => document.getElementById('dc-search').focus(), 50);
+}
+function closeDCModal() { document.getElementById('modal-dc').classList.add('hidden-tab'); }
+function selectDC(dc) { document.getElementById(targetDCInput).value = dc; closeDCModal(); }
 
-                rData.forEach(item => {
-                    const row = item.json || item; 
-                    // Kita cari keys yang sesuai, berjaga-jaga jika FFI merubah urutan kolom
-                    const batchName = row["Nama Batch"] || row["NAMA BATCH"] || row.nama_batch || row.col_7 || row.col_2; 
-                    
-                    if(batchName && String(batchName).toUpperCase() !== 'NAMA BATCH' && !validBatches.includes(batchName)) {
-                        validBatches.push(batchName);
-                        cont.innerHTML += `<button type="button" onclick="addBatchChip('${batchName}')" class="bg-appcard border border-appappleblue/40 text-appappleblue text-[10px] px-3 py-1.5 rounded-lg font-black uppercase btn-tactile hover:bg-appappleblue hover:text-black transition-colors shadow-sm">${batchName}</button>`;
-                    }
-                });
-                
-                if(validBatches.length === 0) {
-                    cont.innerHTML = `<p class="text-[9px] text-gray-500 italic">Belum ada stock / nama batch tersedia di gudang.</p>`;
-                }
-            } else {
-                cont.innerHTML = `<p class="text-[9px] text-appred italic">Gagal meload koneksi FFI Database.</p>`;
-            }
-        }
+function switchForm(type) {
+  ['po', 'sales', 'stock'].forEach(id => {
+    document.getElementById('form-' + id).classList.add('hidden-tab');
+    document.getElementById('btn-form-' + id).className = "seg-btn";
+  });
+  document.getElementById('form-' + type).classList.remove('hidden-tab');
+  document.getElementById('btn-form-' + type).className = "seg-btn active";
+}
 
-        function addBatchChip(bName) {
-            const inp = document.getElementById('sls-batches');
-            if(!inp.value) {
-                inp.value = bName;
-            } else if(!inp.value.includes(bName)) {
-                inp.value += `, ${bName}`;
-            }
-            // Flash color untuk efek tactile (UX)
-            inp.classList.add('border-appappleblue');
-            setTimeout(() => inp.classList.remove('border-appappleblue'), 300);
-        }
+async function loadPODataForSales() {
+  const res = await sendApi({ action: "load_admin" });
+  if (res && res.status === "success" && res.data) {
+    const dl = document.getElementById('recent-po-ids'); dl.innerHTML = ''; let count = 0;
+    res.data.forEach(item => { if(item.ID && count < 20 && !String(item["PO NKA"]).includes("BATAL")) { dl.innerHTML += `<option value="${item.ID}">`; count++; } });
+  }
+}
 
-        async function submitAction(e, act) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]'); 
-            let payload = { action: act }; 
-            const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : "";
-            
-            if(act === 'insert_po') { 
-                payload = { ...payload, id: getVal('po-id').toUpperCase(), tanggal_po: getVal('po-tanggal'), tanggal_exp: getVal('po-exp'), dc: getVal('po-dc').toUpperCase(), po_nka: getVal('po-nka'), po_ndlh: getVal('po-ndlh'), po_nrd: getVal('po-nrd'), po_narr: getVal('po-narr'), po_nkach: getVal('po-nkach') }; 
-            } else if(act === 'insert_sales') { 
-                // Karena kita pakai manual text input + chip, kita cukup ambil value-nya langsung
-                payload = { ...payload, id: getVal('sls-id').toUpperCase(), nka: getVal('sls-nka'), ndlh: getVal('sls-ndlh'), nrd: getVal('sls-nrd'), narr: getVal('sls-narr'), nkach: getVal('sls-nkach'), batches: getVal('sls-batches').toUpperCase() }; 
-            } else if(act === 'insert_stock') { 
-                payload = { ...payload, tanggal: getVal('stk-tanggal'), nama_batch: getVal('stk-nama-batch'), tanggal_exp: getVal('stk-tanggal-exp'), nka: getVal('stk-nka'), ndlh: getVal('stk-ndlh'), nrd: getVal('stk-nrd'), narr: getVal('stk-narr'), nkach: getVal('stk-nkach') }; 
-            }
-            
-            const res = await sendApi(payload, btn, btn.innerText);
-            if(res && res.status === "success") { showToast("Data Tersimpan!"); e.target.reset(); } else showToast("Gagal menyimpan", true);
-        }
-    </script>
+// Batch suggestions as clickable chips
+async function loadBatchesForTagging() {
+  const res = await sendApi({ action: "get_db_stock" });
+  const cont = document.getElementById('suggested-batches');
+  if (res) {
+    let rData = Array.isArray(res) ? (res[0].data || res) : (res.data || [res]);
+    cont.innerHTML = '';
+    let validBatches = [];
+    rData.forEach(item => {
+      const row = item.json || item;
+      const batchName = row["Nama Batch"] || row["NAMA BATCH"] || row.nama_batch || row.col_7 || row.col_2;
+      if(batchName && String(batchName).toUpperCase() !== 'NAMA BATCH' && !validBatches.includes(batchName)) {
+        validBatches.push(batchName);
+        cont.innerHTML += `<button type="button" onclick="addBatchChip('${batchName}')" class="chip btn-tactile">${batchName}</button>`;
+      }
+    });
+    if(validBatches.length === 0) {
+      cont.innerHTML = `<p class="text-[9px] text-gray-500 italic">Belum ada stock / nama batch tersedia di gudang.</p>`;
+    }
+  } else {
+    cont.innerHTML = `<p class="text-[9px] text-appred italic">Gagal meload koneksi FFI Database.</p>`;
+  }
+}
+
+function addBatchChip(bName) {
+  const inp = document.getElementById('sls-batches');
+  if(!inp.value) { inp.value = bName; }
+  else if(!inp.value.includes(bName)) { inp.value += `, ${bName}`; }
+  inp.style.borderColor = '#FF4D6A';
+  setTimeout(() => { inp.style.borderColor = ''; }, 300);
+}
+
+async function submitAction(e, act) {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type="submit"]');
+  let payload = { action: act };
+  const getVal = (id) => document.getElementById(id) ? document.getElementById(id).value : "";
+
+  if(act === 'insert_po') {
+    payload = { ...payload, id: getVal('po-id').toUpperCase(), tanggal_po: getVal('po-tanggal'), tanggal_exp: getVal('po-exp'), dc: getVal('po-dc').toUpperCase(), po_nka: getVal('po-nka'), po_ndlh: getVal('po-ndlh'), po_nrd: getVal('po-nrd'), po_narr: getVal('po-narr'), po_nkach: getVal('po-nkach') };
+  } else if(act === 'insert_sales') {
+    payload = { ...payload, id: getVal('sls-id').toUpperCase(), nka: getVal('sls-nka'), ndlh: getVal('sls-ndlh'), nrd: getVal('sls-nrd'), narr: getVal('sls-narr'), nkach: getVal('sls-nkach'), batches: getVal('sls-batches').toUpperCase() };
+  } else if(act === 'insert_stock') {
+    payload = { ...payload, tanggal: getVal('stk-tanggal'), nama_batch: getVal('stk-nama-batch'), tanggal_exp: getVal('stk-tanggal-exp'), nka: getVal('stk-nka'), ndlh: getVal('stk-ndlh'), nrd: getVal('stk-nrd'), narr: getVal('stk-narr'), nkach: getVal('stk-nkach') };
+  }
+
+  const res = await sendApi(payload, btn, btn.innerText);
+  if(res && res.status === "success") { showToast("Data Tersimpan!"); e.target.reset(); } else showToast("Gagal menyimpan", true);
+}
+</script>
 </body>
 </html>
