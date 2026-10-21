@@ -72,6 +72,10 @@ tailwind.config = {
     <div>
       <h1 class="page-title"><i class="fa-solid fa-file-pdf mr-2" style="color:#FF4D6A"></i>Laporan &amp; Monitor</h1>
       <p class="page-sub">Pilih jenis laporan, atur periode, lalu unduh sebagai PDF.</p>
+      <div class="flex flex-wrap items-center gap-3 mt-2">
+        <button type="button" onclick="initialFetch()" class="btn-ghost btn-tactile px-4 py-2 text-[11px] flex items-center gap-2"><i class="fa-solid fa-rotate-right" id="sync-icon"></i> Muat Ulang Data</button>
+        <p id="data-status" class="text-[10px] font-bold text-apptextmuted">Memuat data...</p>
+      </div>
     </div>
     <!-- Pemilih jenis laporan -->
     <div class="seg md:max-w-xl w-full md:w-auto">
@@ -202,7 +206,7 @@ tailwind.config = {
         </div>
         <div style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 25px; font-family: Arial, sans-serif;">
           <div style="width: 33.33%; background:#F8FAFC; padding:14px; border-radius:10px; border:1px solid #E2E8F0; text-align:center;">
-            <div style="font-size:9px; color:#64748B; text-transform:uppercase; font-weight:800;">Rata-Rata Fulfillment Rate</div>
+            <div style="font-size:9px; color:#64748B; text-transform:uppercase; font-weight:800;">Fulfillment Rate (Akumulasi)</div>
             <div id="trend-rep-fulfill" style="font-size:22px; font-weight:900; margin-top:4px; color:#10B981">0%</div>
           </div>
           <div style="width: 33.33%; background:#F8FAFC; padding:14px; border-radius:10px; border:1px solid #E2E8F0; text-align:center;">
@@ -257,76 +261,104 @@ tailwind.config = {
 <script>
 Chart.register(ChartDataLabels);
 const WEBHOOK_URL = "https://n8n-mzbmiib3etk4.kangkung.sumopod.my.id/webhook/ff-indonesia-api";
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+const TREND_START = { y: 2026, m: 1 };
+const SKUS = ["NKA", "NDLH", "NRD", "NARR", "NKACH"];
+const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
 
 let dbLogData = [];
 let dbForecastData = [];
 let isDataLoaded = false;
-let barChart = null;
-let pieChart = null;
-let chartTrendFulfill = null;
-let chartTrendVolume = null;
+let isLoading = false;
+let loadErrors = [];
+let barChart = null, pieChart = null, chartTrendFulfill = null, chartTrendVolume = null;
 let currentActiveTab = 'analytic';
+let toastTimer = null;
 
-const safeNum = (val) => parseFloat(String(val || 0).replace(/[^0-9.-]+/g, "")) || 0;
+/* ---------- Helpers ---------- */
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n) => Number(n || 0).toLocaleString('id-ID');
+const pad2 = (n) => String(n).padStart(2, '0');
 
-document.addEventListener('DOMContentLoaded', () => {
-  if(!localStorage.getItem('ffi_user')) {
-    localStorage.setItem('ffi_user', JSON.stringify({ name: 'Admin Supply Chain' }));
+// Angka dari Sheets bisa berupa "1,234", "1.234" (locale ID), atau number murni
+function safeNum(val) {
+  if (typeof val === 'number') return isFinite(val) ? val : 0;
+  let s = String(val ?? '').trim();
+  if (!s) return 0;
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else s = s.replace(/,/g, '');
+  const n = parseFloat(s.replace(/[^0-9.-]+/g, ''));
+  return isNaN(n) ? 0 : n;
+}
+
+// Parse tanggal dd/mm/yyyy, d/m/yyyy, yyyy-mm-dd (tanpa substring matching yang rawan salah cocok)
+function parseTgl(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return { y: +m[1], m: +m[2], d: +m[3] };
+  m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+  if (m) {
+    let a = +m[1], b = +m[2], y = +m[3];
+    if (y < 100) y += 2000;
+    if (b > 12 && a <= 12) [a, b] = [b, a];   // format m/d/yyyy dari Sheets locale US
+    return { y, m: b, d: a };
   }
-  const currYear = 2026;
-  const currMonthStr = `${currYear}-07`;
-  document.getElementById('analytic-month').value = currMonthStr;
-  document.getElementById('trend-month').value = currMonthStr;
-  document.getElementById('report-month').value = currMonthStr;
+  return null;
+}
 
-  const sel = document.getElementById('report-dc');
-  const DC_LIST = ["BALARAJA DEPO", "BALARAJA SAT", "BALI", "BANDUNG 1", "BANDUNG 2", "BANJARMASIN", "BATAM", "BEKASI", "BEREBEK", "BOGOR", "CIANJUR", "CIKOKOL", "CILACAP", "CILEUNGSI", "GORONTALO", "JAMBI", "JEMBER", "KARAWANG", "KLATEN", "KOTABUMI", "LAMPUNG", "LOMBOK", "LUWU", "MADIUN", "MAKASSAR", "MALANG", "MANADO", "MEDAN", "PALANGKARAYA", "PALEMBANG", "PARUNG", "PEKANBARU", "PLUMBON", "PONTIANAK", "REMBANG", "SEMARANG", "SERANG", "SIDOARJO", "TEGAL"].sort();
-  DC_LIST.forEach(dc => sel.innerHTML += `<option value="${dc}">${dc}</option>`);
-  setTimeout(() => { initialFetch(); }, 100);
-});
+function getYM(id) {
+  const v = document.getElementById(id).value;
+  if (!v || !/^\d{4}-\d{2}$/.test(v)) return null;
+  const [y, m] = v.split('-').map(Number);
+  return { y, m };
+}
 
-function showToast(msg) {
+/* ---------- Normalisasi baris PO ---------- */
+function poQty(row) { return safeNum(row["TOTAL PO ctn"]) || SKUS.reduce((s, k) => s + safeNum(row["PO " + k]), 0); }
+function salesQty(row) { return safeNum(row["Qty Terpenuhi (Kirim)"]) || SKUS.reduce((s, k) => s + safeNum(row[k]), 0); }
+
+// Backend "Delete PO" mengisi DC="0" + semua qty 0 (bukan teks BATAL), jadi harus dideteksi di sini
+function isVoidRow(row) {
+  if (String(row["PO NKA"] ?? '').toUpperCase().includes('BATAL')) return true;
+  if (String(row.DC ?? '').trim() === '0') return true;
+  return poQty(row) === 0 && salesQty(row) === 0;
+}
+
+function validRows() {
+  return dbLogData.map(i => i.json || i).filter(r => r && r.ID && String(r.ID).toUpperCase() !== 'ID' && !isVoidRow(r));
+}
+function rowsInMonth(y, m) {
+  return validRows().filter(r => { const t = parseTgl(r["Tanggal PO"]); return t && t.y === y && t.m === m; });
+}
+function classifySSC(v) {
+  const s = String(v ?? '').toUpperCase().trim();
+  if (!s) return 'none';
+  if (s.includes('FAIL') || s.includes('WAREHOUSE')) return 'fail';
+  if (s.includes('MOQ')) return 'moq';
+  return 'safe';
+}
+
+/* ---------- UI helpers ---------- */
+function showToast(msg, type = 'ok', ms = 2600) {
   const t = document.getElementById('toast');
   document.getElementById('toast-msg').innerText = msg;
+  document.getElementById('toast-icon').innerHTML =
+    type === 'loading' ? '<i class="fa-solid fa-circle-notch animate-spin"></i>' :
+    type === 'error' ? '<i class="fa-solid fa-triangle-exclamation" style="color:#FF6B81"></i>' :
+    '<i class="fa-solid fa-circle-check" style="color:#4ADE80"></i>';
+  clearTimeout(toastTimer);
   t.classList.add('toast-show');
-  setTimeout(() => t.classList.remove('toast-show'), 2500);
+  toastTimer = setTimeout(() => t.classList.remove('toast-show'), ms);
 }
 
-function switchReportView(type) {
-  currentActiveTab = type;
-  ['analytic','trend','log'].forEach(k => {
-    document.getElementById('view-print-' + k).classList.add('hidden-tab');
-    document.getElementById('ctrl-' + k).classList.add('hidden-tab');
-    document.getElementById('btn-rep-' + k).className = "seg-btn";
-  });
-  const actionBtn = document.getElementById('master-action-btn');
-  const indicator = document.getElementById('view-indicator');
-
-  document.getElementById('view-print-' + type).classList.remove('hidden-tab');
-  document.getElementById('ctrl-' + type).classList.remove('hidden-tab');
-  document.getElementById('btn-rep-' + type).className = "seg-btn active";
-
-  if(type === 'analytic') {
-    actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD ANALYTIC BULANAN (PDF)`;
-    indicator.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Mode Analisis Bulanan Active`;
-    document.getElementById('stat-fulfill-sub').innerText = "Bulan Berjalan";
-    document.getElementById('stat-po-sub').innerText = "Volume PO";
-    document.getElementById('stat-sales-sub').innerText = "Aktual Terkirim";
-  } else if(type === 'trend') {
-    actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD TREN HISTORIS (PDF)`;
-    indicator.innerHTML = `<i class="fa-solid fa-chart-line mr-1"></i> Mode Tren Historis (2026 - Present) Active`;
-    document.getElementById('stat-fulfill-sub').innerText = "Rata-rata Jan 2026 - Present";
-    document.getElementById('stat-po-sub').innerText = "Akumulasi Jan 2026 - Present";
-    document.getElementById('stat-sales-sub').innerText = "Akumulasi Terkirim";
-  } else {
-    actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD LOG PO DOKUMEN`;
-    indicator.innerHTML = `<i class="fa-solid fa-table-list mr-1"></i> Mode Log PO Document Active`;
-  }
-  renderReports();
+function setStatus(html, isError = false) {
+  const el = document.getElementById('data-status');
+  el.className = 'text-[10px] font-bold mt-2 ' + (isError ? 'text-red-300' : 'text-apptextmuted');
+  el.innerHTML = html;
 }
 
-function triggerDownload() { downloadPDF(currentActiveTab); }
-
+/* ---------- Data layer ---------- */
 function extractN8nData(res) {
   if (!res) return [];
   if (Array.isArray(res)) {
@@ -339,238 +371,271 @@ function extractN8nData(res) {
   return [];
 }
 
-async function initialFetch() {
-  showToast("Mengunduh Database Supply Chain...");
-  try {
-    const [reqLog, reqBuffer] = await Promise.all([
-      fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_admin" }) }).then(r => r.json()).catch(() => []),
-      fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: "load_buffer" }) }).then(r => r.json()).catch(() => [])
-    ]);
-    dbLogData = extractN8nData(reqLog);
-    dbForecastData = extractN8nData(reqBuffer);
-    enrichHistorical2026Data();
-    isDataLoaded = true;
-    showToast("Sistem Data Siap!");
-    renderReports();
-  } catch(e) {
-    console.error("Sync error", e);
-    enrichHistorical2026Data();
-    isDataLoaded = true;
-    showToast("Data Historis Diselaraskan!");
-    renderReports();
-  }
+async function callApi(action) {
+  const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const first = Array.isArray(json) ? json[0] : json;
+  if (first && first.status === 'error') throw new Error(first.message || 'Server error');
+  return extractN8nData(json);
 }
 
-// Enriches 2026 historical timeline if live backend data is missing early months
-function enrichHistorical2026Data() {
-  const months = ["01", "02", "03", "04", "05", "06", "07"];
-  const dcs = ["BALARAJA DEPO", "BANDUNG 1", "BEKASI", "BEREBEK", "BOGOR", "JAKARTA", "MEDAN", "SURABAYA"];
-  const existingDates = dbLogData.map(i => String((i.json||i)["Tanggal PO"] || ""));
-  months.forEach(m => {
-    const monthPattern = `${m}/2026`;
-    const hasData = existingDates.some(d => d.includes(monthPattern) || d.includes(`2026-${m}`));
-    if (!hasData) {
-      dcs.forEach((dc, idx) => {
-        const poVol = Math.floor(1300 + Math.random() * 700);
-        const slsVol = Math.floor(poVol * (0.83 + Math.random() * 0.14));
-        const gap = poVol - slsVol;
-        const ssc = gap > 250 ? "WH FAIL" : "SAFE";
-        dbLogData.push({
-          ID: `PO-2026-${m}-${100 + idx}`, "Tanggal PO": `15/${m}/2026`, DC: dc,
-          "TOTAL PO ctn": poVol, "Qty Terpenuhi (Kirim)": slsVol, GAP: gap, "Status Supply Chain (SSC)": ssc,
-          "PO NKA": Math.floor(poVol * 0.3), "PO NDLH": Math.floor(poVol * 0.25), "PO NRD": Math.floor(poVol * 0.2), "PO NARR": Math.floor(poVol * 0.15), "PO NKACH": Math.floor(poVol * 0.1),
-          "NKA": Math.floor(slsVol * 0.3), "NDLH": Math.floor(slsVol * 0.25), "NRD": Math.floor(slsVol * 0.2), "NARR": Math.floor(slsVol * 0.15), "NKACH": Math.floor(slsVol * 0.1)
-        });
-      });
-    }
-  });
+async function initialFetch() {
+  if (isLoading) return;
+  isLoading = true; loadErrors = [];
+  document.getElementById('sync-icon').classList.add('fa-spin');
+  showToast("Mengunduh database supply chain...", 'loading', 8000);
+
+  const [logR, bufR] = await Promise.allSettled([callApi('load_admin'), callApi('load_buffer')]);
+  dbLogData = logR.status === 'fulfilled' ? logR.value : [];
+  dbForecastData = bufR.status === 'fulfilled' ? bufR.value : [];
+  if (logR.status === 'rejected') loadErrors.push('data PO');
+  if (bufR.status === 'rejected') loadErrors.push('buffer SKU');
+
+  isLoading = false; isDataLoaded = true;
+  document.getElementById('sync-icon').classList.remove('fa-spin');
+
+  if (loadErrors.length) {
+    setStatus(`<i class="fa-solid fa-triangle-exclamation mr-1"></i>Gagal memuat ${loadErrors.join(' & ')}. Periksa koneksi lalu tekan "Muat Ulang".`, true);
+    showToast("Sebagian data gagal dimuat", 'error', 4000);
+  } else {
+    const now = new Date();
+    setStatus(`<i class="fa-solid fa-circle-check mr-1" style="color:#4ADE80"></i>Data live • ${validRows().length} PO aktif • diperbarui ${pad2(now.getHours())}:${pad2(now.getMinutes())}`);
+    showToast("Data siap!");
+  }
+  renderReports();
 }
+
+/* ---------- Init ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+  if (!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+
+  const now = new Date();
+  const cur = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}`;
+  ['analytic-month', 'trend-month', 'report-month'].forEach(id => document.getElementById(id).value = cur);
+
+  const sel = document.getElementById('report-dc');
+  DC_LIST.forEach(dc => sel.innerHTML += `<option value="${esc(dc)}">${esc(dc)}</option>`);
+  initialFetch();
+});
+
+function switchReportView(type) {
+  currentActiveTab = type;
+  ['analytic', 'trend', 'log'].forEach(k => {
+    document.getElementById('view-print-' + k).classList.add('hidden-tab');
+    document.getElementById('ctrl-' + k).classList.add('hidden-tab');
+    document.getElementById('btn-rep-' + k).className = "seg-btn";
+  });
+  const actionBtn = document.getElementById('master-action-btn');
+  const indicator = document.getElementById('view-indicator');
+
+  document.getElementById('view-print-' + type).classList.remove('hidden-tab');
+  document.getElementById('ctrl-' + type).classList.remove('hidden-tab');
+  document.getElementById('btn-rep-' + type).className = "seg-btn active";
+
+  if (type === 'analytic') {
+    actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD ANALYTIC BULANAN (PDF)`;
+    indicator.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Mode Analisis Bulanan Active`;
+    document.getElementById('stat-fulfill-sub').innerText = "Bulan Berjalan";
+    document.getElementById('stat-po-sub').innerText = "Volume PO";
+    document.getElementById('stat-sales-sub').innerText = "Aktual Terkirim";
+  } else if (type === 'trend') {
+    actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD TREN HISTORIS (PDF)`;
+    indicator.innerHTML = `<i class="fa-solid fa-chart-line mr-1"></i> Mode Tren Historis Active`;
+    document.getElementById('stat-fulfill-sub').innerText = "Akumulasi Jan 2026 - bulan akhir";
+    document.getElementById('stat-po-sub').innerText = "Akumulasi Jan 2026 - bulan akhir";
+    document.getElementById('stat-sales-sub').innerText = "Akumulasi Terkirim";
+  } else {
+    actionBtn.innerHTML = `<i class="fa-solid fa-file-pdf text-sm"></i> DOWNLOAD LOG PO DOKUMEN`;
+    indicator.innerHTML = `<i class="fa-solid fa-table-list mr-1"></i> Mode Log PO Document Active`;
+    document.getElementById('stat-fulfill-sub').innerText = "Bulan Berjalan";
+    document.getElementById('stat-po-sub').innerText = "Volume PO";
+    document.getElementById('stat-sales-sub').innerText = "Aktual Terkirim";
+  }
+  renderReports();
+}
+
+function triggerDownload() { downloadPDF(currentActiveTab); }
 
 function renderReports() {
-  if(!isDataLoaded) return;
+  if (!isDataLoaded) return;
   if (currentActiveTab === 'analytic') renderAnalyticReport();
   else if (currentActiveTab === 'trend') renderTrendReport();
-  else if (currentActiveTab === 'log') renderLogReport();
+  else renderLogReport();
 }
 
-/* 1. MONTHLY ANALYTIC REPORT */
+function setHealth(text, level) {
+  const el = document.getElementById('stat-log-health');
+  const color = level === 'good' ? 'text-green-300' : level === 'bad' ? 'text-red-300' : level === 'warn' ? 'text-amber-300' : 'text-white';
+  el.innerText = text;
+  el.className = `text-xs font-bold mt-4 ${color} tracking-wide uppercase leading-tight`;
+}
+
+function setStatTiles(po, sales) {
+  const rate = po ? Math.round((sales / po) * 100) : 0;
+  document.getElementById('stat-fulfill').innerText = `${rate}%`;
+  document.getElementById('stat-po-vol').innerHTML = `${fmt(po)} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
+  document.getElementById('stat-sales-vol').innerHTML = `${fmt(sales)} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
+  return rate;
+}
+
+// Buffer SKU = snapshot terkini (tidak punya tanggal), header baris & baris kosong harus dibuang
+function readBufferHealth() {
+  let crit = 0, safe = 0;
+  dbForecastData.forEach(i => {
+    const row = i.json || i; const vals = Object.values(row);
+    const sku = String(row.col_2 ?? vals[1] ?? '').trim();
+    const st = String(row.col_6 ?? vals[5] ?? '').toUpperCase().trim();
+    if (!sku || !st || /NAMA SKU|^SKU$|^COL_/i.test(sku)) return;
+    if (st.includes('CRITICAL')) crit++; else safe++;
+  });
+  return { crit, safe };
+}
+
+/* ---------- 1. Analytic bulanan ---------- */
 function renderAnalyticReport() {
-  const mon = document.getElementById('analytic-month').value; if(!mon) return;
-  const [y, mStr] = mon.split('-'); const mInt = parseInt(mStr, 10);
-  document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${mStr} / ${y}`;
+  const ym = getYM('analytic-month'); if (!ym) return;
+  document.getElementById('lbl-analytic-date').innerText = `Periode Pembukuan: ${pad2(ym.m)} / ${ym.y}`;
 
-  let totPO=0, totSales=0;
-  let fCount=0, mCount=0, aCount=0;
-  let skuNKA_PO=0, skuNDLH_PO=0, skuNRD_PO=0, skuNARR_PO=0, skuNKACH_PO=0;
-  let skuNKA_Sls=0, skuNDLH_Sls=0, skuNRD_Sls=0, skuNARR_Sls=0, skuNKACH_Sls=0;
+  let totPO = 0, totSales = 0;
+  const cnt = { fail: 0, moq: 0, safe: 0, none: 0 };
+  const poSku = {}, slsSku = {};
+  SKUS.forEach(k => { poSku[k] = 0; slsSku[k] = 0; });
 
-  dbLogData.forEach(i => {
-    const row = i.json || i;
-    if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return;
-    const tgl = String(row["Tanggal PO"] || "");
-    if(!tgl.includes(`${mStr}/${y}`) && !tgl.includes(`/${mInt}/${y}`) && !tgl.includes(`${y}-${mStr}`)) return;
-
-    const poCtn = safeNum(row["TOTAL PO ctn"]);
-    totPO += poCtn;
-    totSales += safeNum(row["Qty Terpenuhi (Kirim)"]);
-    skuNKA_PO += safeNum(row["PO NKA"]); skuNDLH_PO += safeNum(row["PO NDLH"]); skuNRD_PO += safeNum(row["PO NRD"]); skuNARR_PO += safeNum(row["PO NARR"]); skuNKACH_PO += safeNum(row["PO NKACH"]);
-    skuNKA_Sls += safeNum(row["NKA"]); skuNDLH_Sls += safeNum(row["NDLH"]); skuNRD_Sls += safeNum(row["NRD"]); skuNARR_Sls += safeNum(row["NARR"]); skuNKACH_Sls += safeNum(row["NKACH"]);
-
-    const ssc = String(row["Status Supply Chain (SSC)"] || "").toUpperCase();
-    if (ssc.includes("WAREHOUSE FAILURE") || ssc.includes("WH FAIL")) { fCount += poCtn; }
-    else if (ssc.includes("UNDER MOQ")) { mCount += poCtn; }
-    else { aCount += poCtn; }
+  rowsInMonth(ym.y, ym.m).forEach(row => {
+    const po = poQty(row);
+    totPO += po; totSales += salesQty(row);
+    SKUS.forEach(k => { poSku[k] += safeNum(row["PO " + k]); slsSku[k] += safeNum(row[k]); });
+    cnt[classifySSC(row["Status Supply Chain (SSC)"])] += po;
   });
 
-  const rateVal = totPO ? Math.round((totSales/totPO)*100) : 0;
-  const rateStr = `${rateVal}%`;
-  document.getElementById('rep-fulfill').innerText = rateStr;
-  document.getElementById('rep-prod').innerText = `${totPO.toLocaleString('id-ID')} / ${totSales.toLocaleString('id-ID')}`;
+  const rate = setStatTiles(totPO, totSales);
+  document.getElementById('rep-fulfill').innerText = `${rate}%`;
+  document.getElementById('rep-prod').innerText = `${fmt(totPO)} / ${fmt(totSales)}`;
 
-  document.getElementById('stat-fulfill').innerText = rateStr;
-  document.getElementById('stat-po-vol').innerHTML = `${totPO.toLocaleString('id-ID')} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
-  document.getElementById('stat-sales-vol').innerHTML = `${totSales.toLocaleString('id-ID')} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
-
-  const validForecast = dbForecastData.filter(i => {
-    const row = i.json || i;
-    if (!row.col_2 || String(row.col_2).toUpperCase() === 'SKU') return false;
-    const fTgl = String(row["Tanggal PO"] || row.col_1 || row.Tanggal || "");
-    if (fTgl && !fTgl.includes(`${mStr}/${y}`) && !fTgl.includes(`/${mInt}/${y}`) && !fTgl.includes(`${y}-${mStr}`)) return false;
-    return true;
-  });
-
-  let crit=0, safe=0;
-  validForecast.forEach(i => {
-    const row = i.json || i;
-    if(String(row.col_6||"").toUpperCase().includes("CRITICAL")) crit++; else safe++;
-  });
-
-  document.getElementById('rep-alert').innerText = crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN";
+  const { crit, safe } = readBufferHealth();
+  const noData = totPO === 0;
+  document.getElementById('rep-alert').innerText = noData ? "BELUM ADA DATA PO" : (crit > 0 ? "⚠️ ATENSI DISTRIBUSI" : "✅ LOGISTIK AMAN");
   document.getElementById('rep-inv-health').innerHTML = `<span style="color:#EF4444; font-weight:bold;">${crit} SKU Kritis</span> &nbsp;|&nbsp; <span style="color:#10B981; font-weight:bold;">${safe} SKU Aman</span>`;
 
-  const logHealthEl = document.getElementById('stat-log-health');
-  if(crit > 0) {
-    logHealthEl.innerText = "🚨 CRITICAL ATTENTION";
-    logHealthEl.className = "text-xs font-bold mt-4 text-red-300 tracking-wide uppercase leading-tight";
-  } else {
-    logHealthEl.innerText = "✨ SAFE LOGISTICS";
-    logHealthEl.className = "text-xs font-bold mt-4 text-green-300 tracking-wide uppercase leading-tight";
-  }
+  if (noData) setHealth("BELUM ADA DATA PO", 'neutral');
+  else if (crit > 0) setHealth("🚨 CRITICAL ATTENTION", 'bad');
+  else setHealth("✨ SAFE LOGISTICS", 'good');
 
-  if(barChart) barChart.destroy();
-  if(pieChart) pieChart.destroy();
+  if (barChart) barChart.destroy();
+  if (pieChart) pieChart.destroy();
 
   barChart = new Chart(document.getElementById('chartBar'), {
     type: 'bar',
     data: {
-      labels: ['NKA', 'NDLH', 'NRD', 'NARR', 'NKACH'],
+      labels: SKUS,
       datasets: [
-        { label: 'Demand', data: [skuNKA_Sls, skuNDLH_Sls, skuNRD_Sls, skuNARR_Sls, skuNKACH_Sls], backgroundColor: '#BE123C' },
-        { label: 'PO Target', data: [skuNKA_PO, skuNDLH_PO, skuNRD_PO, skuNARR_PO, skuNKACH_PO], backgroundColor: '#FDA4AF' }
+        { label: 'PO (Demand)', data: SKUS.map(k => poSku[k]), backgroundColor: '#FDA4AF' },
+        { label: 'Terkirim (Sales)', data: SKUS.map(k => slsSku[k]), backgroundColor: '#BE123C' }
       ]
-    },
-    options: { animation: false, responsive: false, maintainAspectRatio: false, plugins: { datalabels: { display: false } } }
-  });
-
-  pieChart = new Chart(document.getElementById('chartPie'), {
-    type: 'pie',
-    data: {
-      labels: ['WH Fail', 'Under MOQ', 'Safe'],
-      datasets: [{ data: [fCount || 1, mCount, aCount || 1], backgroundColor: ['#EF4444', '#F59E0B', '#10B981'] }]
     },
     options: {
       animation: false, responsive: false, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 10, family: 'Arial' } } }, datalabels: { display: false } }
+    }
+  });
+
+  const pieSum = cnt.fail + cnt.moq + cnt.safe + cnt.none;
+  const pieLabels = pieSum ? ['WH Fail', 'Under MOQ', 'Safe', 'Belum Ada Status'] : ['Tidak ada data'];
+  const pieData = pieSum ? [cnt.fail, cnt.moq, cnt.safe, cnt.none] : [1];
+  const pieColors = pieSum ? ['#EF4444', '#F59E0B', '#10B981', '#94A3B8'] : ['#E2E8F0'];
+  pieChart = new Chart(document.getElementById('chartPie'), {
+    type: 'pie',
+    data: { labels: pieLabels, datasets: [{ data: pieData, backgroundColor: pieColors }] },
+    options: {
+      animation: false, responsive: false, maintainAspectRatio: false,
       plugins: {
-        legend: { position: 'bottom', labels: { font: {size: 10, family: 'Arial'} } },
+        legend: { position: 'bottom', labels: { font: { size: 10, family: 'Arial' } } },
         datalabels: {
           color: '#ffffff', font: { weight: 'bold', size: 10, family: 'Arial' }, textAlign: 'center',
-          formatter: (value, ctx) => { let sum = 0; ctx.chart.data.datasets[0].data.forEach(data => sum += data); return Math.round((value * 100 / sum)) + "%"; }
+          formatter: (value, ctx) => {
+            if (!pieSum || !value) return '';
+            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            return Math.round(value * 100 / sum) + '%';
+          }
         }
       }
     }
   });
+  if (noData && isDataLoaded && !loadErrors.length) showToast(`Tidak ada PO aktif pada ${pad2(ym.m)}/${ym.y}`, 'error', 3000);
 }
 
-/* 2. TREND MONITOR (JAN 2026 - PRESENT) */
+/* ---------- 2. Tren historis (Jan 2026 s/d bulan terpilih, lintas tahun) ---------- */
 function renderTrendReport() {
-  const endMonStr = document.getElementById('trend-month').value || '2026-07';
-  const [endYear, endMonthNum] = endMonStr.split('-').map(Number);
+  const startIdx = TREND_START.y * 12 + (TREND_START.m - 1);
+  let end = getYM('trend-month');
+  const now = new Date();
+  if (!end) end = { y: now.getFullYear(), m: now.getMonth() + 1 };
+  let endIdx = end.y * 12 + (end.m - 1);
+  if (endIdx < startIdx) { endIdx = startIdx; end = { y: TREND_START.y, m: TREND_START.m }; }
 
-  let monthLabels = [];
-  let monthKeys = [];
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agus", "Sep", "Okt", "Nov", "Des"];
-  for (let m = 1; m <= endMonthNum; m++) {
-    const mTwo = String(m).padStart(2, '0');
-    monthLabels.push(`${monthNames[m-1]} 2026`);
-    monthKeys.push(`${mTwo}/2026`);
+  const n = endIdx - startIdx + 1;
+  const labels = [], monthlyPO = new Array(n).fill(0), monthlySales = new Array(n).fill(0);
+  for (let i = 0; i < n; i++) {
+    const idx = startIdx + i;
+    labels.push(`${MONTH_NAMES[idx % 12]} ${String(Math.floor(idx / 12)).slice(2)}`);
   }
-  document.getElementById('lbl-trend-date').innerText = `Periode Evaluasi: Januari 2026 s/d ${monthNames[endMonthNum-1]} 2026`;
+  document.getElementById('lbl-trend-date').innerText = `Periode Evaluasi: Januari ${TREND_START.y} s/d ${MONTH_NAMES[end.m - 1]} ${end.y}`;
 
-  let monthlyPO = new Array(monthKeys.length).fill(0);
-  let monthlySales = new Array(monthKeys.length).fill(0);
-  let monthlyFulfillRate = new Array(monthKeys.length).fill(0);
-  let totalPOAll = 0, totalSalesAll = 0;
-
-  dbLogData.forEach(item => {
-    const row = item.json || item;
-    if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return;
-    const tgl = String(row["Tanggal PO"] || "");
-    const poCtn = safeNum(row["TOTAL PO ctn"]);
-    const slsCtn = safeNum(row["Qty Terpenuhi (Kirim)"]);
-    monthKeys.forEach((mKey, idx) => {
-      const [mStr, yStr] = mKey.split('/');
-      const mInt = parseInt(mStr, 10);
-      if (tgl.includes(mKey) || tgl.includes(`/${mInt}/${yStr}`) || tgl.includes(`${yStr}-${mStr}`)) {
-        monthlyPO[idx] += poCtn; monthlySales[idx] += slsCtn;
-      }
-    });
+  validRows().forEach(row => {
+    const t = parseTgl(row["Tanggal PO"]); if (!t) return;
+    const i = (t.y * 12 + (t.m - 1)) - startIdx;
+    if (i < 0 || i >= n) return;
+    monthlyPO[i] += poQty(row); monthlySales[i] += salesQty(row);
   });
 
-  for (let i = 0; i < monthKeys.length; i++) {
-    totalPOAll += monthlyPO[i]; totalSalesAll += monthlySales[i];
-    monthlyFulfillRate[i] = monthlyPO[i] > 0 ? Math.round((monthlySales[i] / monthlyPO[i]) * 100) : 0;
-  }
-  const overallRate = totalPOAll > 0 ? Math.round((totalSalesAll / totalPOAll) * 100) : 0;
+  const rates = monthlyPO.map((po, i) => po > 0 ? Math.round((monthlySales[i] / po) * 100) : null);
+  const totalPO = monthlyPO.reduce((a, b) => a + b, 0), totalSales = monthlySales.reduce((a, b) => a + b, 0);
+  const overall = setStatTiles(totalPO, totalSales);
 
-  document.getElementById('stat-fulfill').innerText = `${overallRate}%`;
-  document.getElementById('stat-po-vol').innerHTML = `${totalPOAll.toLocaleString('id-ID')} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
-  document.getElementById('stat-sales-vol').innerHTML = `${totalSalesAll.toLocaleString('id-ID')} <span class="text-xs text-apptextmuted font-normal">ctn</span>`;
+  if (!totalPO) setHealth("BELUM ADA DATA PO", 'neutral');
+  else if (overall >= 95) setHealth("✨ TREN PERFORMA BAGUS", 'good');
+  else setHealth("⚠️ PERLU INTERVENSI", 'warn');
 
-  const logHealthEl = document.getElementById('stat-log-health');
-  logHealthEl.innerText = overallRate >= 90 ? "✨ TREN PERFORMA BAGUS" : "⚠️ PERLU INTERVENSI";
-  logHealthEl.className = overallRate >= 90 ? "text-xs font-bold mt-4 text-green-300 tracking-wide uppercase leading-tight" : "text-xs font-bold mt-4 text-amber-300 tracking-wide uppercase leading-tight";
-
-  document.getElementById('trend-rep-fulfill').innerText = `${overallRate}%`;
-  document.getElementById('trend-rep-po').innerText = `${totalPOAll.toLocaleString('id-ID')} ctn`;
-  document.getElementById('trend-rep-sls').innerText = `${totalSalesAll.toLocaleString('id-ID')} ctn`;
+  document.getElementById('trend-rep-fulfill').innerText = `${overall}%`;
+  document.getElementById('trend-rep-po').innerText = `${fmt(totalPO)} ctn`;
+  document.getElementById('trend-rep-sls').innerText = `${fmt(totalSales)} ctn`;
 
   if (chartTrendFulfill) chartTrendFulfill.destroy();
   if (chartTrendVolume) chartTrendVolume.destroy();
 
+  const present = rates.filter(r => r !== null);
+  const yMin = present.length ? Math.max(0, Math.floor((Math.min(...present, 95) - 10) / 10) * 10) : 0;
+
   chartTrendFulfill = new Chart(document.getElementById('chartTrendFulfill'), {
     type: 'line',
     data: {
-      labels: monthLabels,
-      datasets: [{
-        label: 'Fulfillment Rate (%)', data: monthlyFulfillRate,
-        borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.12)',
-        borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#10B981', fill: true, tension: 0.3
-      }]
+      labels,
+      datasets: [
+        {
+          label: 'Fulfillment Rate (%)', data: rates, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.12)',
+          borderWidth: 3, pointRadius: 5, pointBackgroundColor: '#10B981', fill: true, tension: 0.3, spanGaps: false
+        },
+        {
+          label: 'Target 95%', data: labels.map(() => 95), borderColor: '#BE123C', borderDash: [6, 4], borderWidth: 1.5,
+          pointRadius: 0, fill: false, datalabels: { display: false }
+        }
+      ]
     },
     options: {
       animation: false, responsive: false, maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
-        datalabels: { align: 'top', color: '#0F172A', font: { weight: 'bold', size: 10, family: 'Arial' }, formatter: (val) => `${val}%` }
+        legend: { position: 'top', labels: { font: { size: 9, family: 'Arial' } } },
+        datalabels: { align: 'top', color: '#0F172A', font: { weight: 'bold', size: 10, family: 'Arial' }, formatter: (v) => v === null ? '' : `${v}%` }
       },
-      scales: { y: { min: 50, max: 100, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 10 } } } }
+      scales: { y: { min: yMin, suggestedMax: 100, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 10 } } } }
     }
   });
 
   chartTrendVolume = new Chart(document.getElementById('chartTrendVolume'), {
     type: 'line',
     data: {
-      labels: monthLabels,
+      labels,
       datasets: [
         { label: 'PO Target Demand (Ctn)', data: monthlyPO, borderColor: '#BE123C', backgroundColor: '#BE123C', borderWidth: 2.5, pointRadius: 4, tension: 0.2 },
         { label: 'Aktual Terkirim (Ctn)', data: monthlySales, borderColor: '#059669', backgroundColor: '#059669', borderWidth: 2.5, pointRadius: 4, tension: 0.2 }
@@ -579,97 +644,98 @@ function renderTrendReport() {
     options: {
       animation: false, responsive: false, maintainAspectRatio: false,
       plugins: { legend: { position: 'top', labels: { font: { size: 10, family: 'Arial', weight: 'bold' } } }, datalabels: { display: false } },
-      scales: { y: { ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 10 } } } }
+      scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 10 } } } }
     }
   });
 }
 
-/* 3. LOG PO REPORT TABLE */
+/* ---------- 3. Log PO ---------- */
 function renderLogReport() {
-  const mon = document.getElementById('report-month').value;
+  const ym = getYM('report-month'); if (!ym) return;
   const dcVal = document.getElementById('report-dc').value;
-  if(!mon) return;
-  const [y, mStr] = mon.split('-');
-  const mInt = parseInt(mStr, 10);
+  document.getElementById('rep-log-period').innerHTML = `Periode: ${pad2(ym.m)} / ${ym.y} &nbsp;|&nbsp; Target: <span style="color:#BE123C;">${dcVal === 'ALL' ? 'SEMUA DC' : esc(dcVal)}</span>`;
 
-  document.getElementById('rep-log-period').innerHTML = `Periode: ${mStr} / ${y} &nbsp;|&nbsp; Target: <span style="color:#BE123C;">${dcVal}</span>`;
+  const rows = rowsInMonth(ym.y, ym.m)
+    .filter(r => dcVal === 'ALL' || String(r.DC).toUpperCase() === dcVal.toUpperCase())
+    .sort((a, b) => {
+      const ta = parseTgl(a["Tanggal PO"]), tb = parseTgl(b["Tanggal PO"]);
+      return (ta.d - tb.d) || String(a.ID).localeCompare(String(b.ID));
+    });
 
-  let rows = dbLogData.filter(i => {
-    const row = i.json || i;
-    if(!row.ID || String(row["PO NKA"]).includes("BATAL") || String(row.ID).toUpperCase() === 'ID') return false;
-    const matchM = (row["Tanggal PO"]||"").includes(`${mStr}/${y}`) || (row["Tanggal PO"]||"").includes(`/${mInt}/${y}`);
-    const matchD = dcVal === "ALL" || String(row.DC).toUpperCase() === String(dcVal).toUpperCase();
-    return matchM && matchD;
+  let totPO = 0, totSls = 0, totGap = 0;
+  const td = 'padding:9px 10px; border-bottom:1px solid #E2E8F0;';
+  const th = 'padding:10px; border-bottom:2px solid #CBD5E1; font-weight:800;';
+  let body = '';
+  rows.forEach(row => {
+    const po = poQty(row), sls = salesQty(row);
+    const hasGap = row.GAP !== undefined && String(row.GAP).trim() !== '';
+    const gap = hasGap ? safeNum(row.GAP) : Math.max(0, po - sls);
+    totPO += po; totSls += sls; totGap += gap;
+    body += `
+      <tr style="page-break-inside: avoid;">
+        <td style="${td} font-weight:bold; color:#0F172A;">${esc(row.ID)}</td>
+        <td style="${td} color:#475569;">${esc(row["Tanggal PO"])}</td>
+        <td style="${td} font-weight:600;">${esc(row.DC)}</td>
+        <td style="${td} text-align:center;">${fmt(po)}</td>
+        <td style="${td} text-align:center;">${fmt(sls)}</td>
+        <td style="${td} text-align:center; font-weight:bold; color:${gap > 0 ? '#EF4444' : '#10B981'}">${fmt(gap)}</td>
+      </tr>`;
   });
 
-  let html = `
+  const rate = totPO ? Math.round((totSls / totPO) * 100) : 0;
+  setStatTiles(totPO, totSls);
+  document.getElementById('stat-fulfill-sub').innerText = `${rows.length} PO pada filter ini`;
+  if (!totPO) setHealth("BELUM ADA DATA PO", 'neutral');
+  else if (rate >= 95) setHealth("✨ SAFE LOGISTICS", 'good');
+  else setHealth("⚠️ ADA GAP SUPPLY", 'warn');
+
+  const html = `
     <table style="width:100%; border-collapse:collapse; font-size:11px; text-align:left; font-family: Arial, sans-serif;">
       <thead>
         <tr style="background:#F8FAFC; color:#334155;">
-          <th style="padding:10px; border-bottom:2px solid #CBD5E1; font-weight:800;">ID PO</th>
-          <th style="padding:10px; border-bottom:2px solid #CBD5E1; font-weight:800;">TANGGAL</th>
-          <th style="padding:10px; border-bottom:2px solid #CBD5E1; font-weight:800;">DC GUDANG</th>
-          <th style="padding:10px; border-bottom:2px solid #CBD5E1; text-align:center; font-weight:800;">PO (CTN)</th>
-          <th style="padding:10px; border-bottom:2px solid #CBD5E1; text-align:center; font-weight:800;">SALES (CTN)</th>
-          <th style="padding:10px; border-bottom:2px solid #CBD5E1; text-align:center; font-weight:800;">GAP</th>
+          <th style="${th}">ID PO</th><th style="${th}">TANGGAL</th><th style="${th}">DC GUDANG</th>
+          <th style="${th} text-align:center;">PO (CTN)</th><th style="${th} text-align:center;">SALES (CTN)</th><th style="${th} text-align:center;">GAP</th>
         </tr>
       </thead>
-      <tbody>`;
-
-  rows.forEach(i => {
-    const row = i.json || i;
-    const po = safeNum(row["TOTAL PO ctn"]);
-    const sls = safeNum(row["Qty Terpenuhi (Kirim)"]);
-    const gap = safeNum(row.GAP) || Math.max(0, po - sls);
-    html += `
-      <tr style="page-break-inside: avoid;">
-        <td style="padding:9px 10px; border-bottom:1px solid #E2E8F0; font-weight:bold; color:#0F172A;">${row.ID}</td>
-        <td style="padding:9px 10px; border-bottom:1px solid #E2E8F0; color:#475569;">${row["Tanggal PO"]}</td>
-        <td style="padding:9px 10px; border-bottom:1px solid #E2E8F0; font-weight:600;">${row.DC}</td>
-        <td style="padding:9px 10px; border-bottom:1px solid #E2E8F0; text-align:center;">${po.toLocaleString('id-ID')}</td>
-        <td style="padding:9px 10px; border-bottom:1px solid #E2E8F0; text-align:center;">${sls.toLocaleString('id-ID')}</td>
-        <td style="padding:9px 10px; border-bottom:1px solid #E2E8F0; text-align:center; font-weight:bold; color:${gap>0?'#EF4444':'#10B981'}">${gap.toLocaleString('id-ID')}</td>
-      </tr>`;
-  });
-  html += `</tbody></table>`;
+      <tbody>${body}</tbody>
+      <tfoot>
+        <tr style="background:#FFF1F2; font-weight:900; color:#0F172A;">
+          <td colspan="3" style="padding:10px; border-top:2px solid #BE123C;">TOTAL (${rows.length} PO)</td>
+          <td style="padding:10px; border-top:2px solid #BE123C; text-align:center;">${fmt(totPO)}</td>
+          <td style="padding:10px; border-top:2px solid #BE123C; text-align:center;">${fmt(totSls)}</td>
+          <td style="padding:10px; border-top:2px solid #BE123C; text-align:center; color:${totGap > 0 ? '#EF4444' : '#10B981'}">${fmt(totGap)}</td>
+        </tr>
+      </tfoot>
+    </table>`;
   document.getElementById('rep-log-content').innerHTML = rows.length ? html : `<p style="text-align:center; color:#94A3B8; padding:50px; font-style:italic; font-size:12px;">Tidak ada data pembukuan pada filter ini.</p>`;
 }
 
-/* PDF EXPORT ENGINE */
+/* ---------- PDF export ---------- */
 function downloadPDF(type) {
-  let id = 'print-analytic';
-  if (type === 'trend') id = 'print-trend';
-  else if (type === 'log') id = 'print-log';
+  if (typeof html2pdf === 'undefined') { showToast("Library PDF gagal dimuat. Periksa koneksi internet.", 'error', 4000); return; }
+  const id = type === 'trend' ? 'print-trend' : type === 'log' ? 'print-log' : 'print-analytic';
 
-  let fileName = "";
-  if (type === 'analytic') {
-    const mon = document.getElementById('analytic-month').value || 'All';
-    fileName = `FFI_Analytic_Report_${mon}`;
-  } else if (type === 'trend') {
-    const mon = document.getElementById('trend-month').value || 'All';
-    fileName = `FFI_SupplyChain_Trend_Jan2026_to_${mon}`;
-  } else {
-    const mon = document.getElementById('report-month').value || 'All';
-    const dc = document.getElementById('report-dc').value || 'ALL';
-    fileName = `FFI_Log_PO_${mon}_${dc.replace(/ /g, "_")}`;
-  }
+  let fileName;
+  if (type === 'analytic') fileName = `FFI_Analytic_Report_${document.getElementById('analytic-month').value || 'All'}`;
+  else if (type === 'trend') fileName = `FFI_SupplyChain_Trend_Jan2026_to_${document.getElementById('trend-month').value || 'All'}`;
+  else fileName = `FFI_Log_PO_${document.getElementById('report-month').value || 'All'}_${(document.getElementById('report-dc').value || 'ALL').replace(/ /g, "_")}`;
 
-  showToast("Mempersiapkan Dokumen PDF...");
-  window.scrollTo(0, 0);
+  showToast("Mempersiapkan dokumen PDF...", 'loading', 15000);
+  document.activeElement && document.activeElement.blur();
   const element = document.getElementById(id);
+  element.parentElement.scrollLeft = 0;
+  window.scrollTo(0, 0);
+
   const opt = {
     margin: [10, 0, 10, 0], filename: `${fileName}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+    html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['css', 'legacy'] }
   };
-  html2pdf().set(opt).from(element).save().then(() => {
-    showToast("PDF Berhasil Diunduh!");
-  }).catch((err) => {
-    console.error(err);
-    showToast("Gagal mencetak dokumen PDF.");
-  });
+  html2pdf().set(opt).from(element).save()
+    .then(() => showToast("PDF berhasil diunduh!"))
+    .catch((err) => { console.error(err); showToast("Gagal mencetak dokumen PDF.", 'error', 4000); });
 }
 </script>
 </body>
