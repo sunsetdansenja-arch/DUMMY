@@ -56,9 +56,12 @@ tailwind.config = {
 
   <!-- Search + filter (menempel di bawah header) -->
   <div class="sticky z-20 space-y-3 py-2" style="top: 4.1rem;">
-    <div class="relative">
-      <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-      <input type="text" id="search-po" placeholder="Cari ID PO atau DC Gudang..." onkeyup="filterLogLocal()" style="padding-left: 2.6rem; border-radius: 9999px;">
+    <div class="flex gap-2">
+      <div class="relative flex-1 min-w-0">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+        <input type="text" id="search-po" placeholder="Cari ID PO atau DC Gudang..." onkeyup="filterLogLocal()" style="padding-left: 2.6rem; border-radius: 9999px;">
+      </div>
+      <input type="month" id="filter-month" onchange="loadLogPO()" title="Periode PO (kosongkan = semua)" style="width: 9.5rem; border-radius: 9999px; padding-left: 1rem; padding-right: .75rem; flex-shrink: 0;">
     </div>
     <div class="seg" id="status-filter">
       <button type="button" class="seg-btn active" data-f="all" onclick="setFilter('all')">Semua</button>
@@ -67,7 +70,10 @@ tailwind.config = {
       <button type="button" class="seg-btn" data-f="none" onclick="setFilter('none')">Belum Kirim</button>
       <button type="button" class="seg-btn" data-f="void" onclick="setFilter('void')">Void</button>
     </div>
-    <p id="result-count" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-2"></p>
+    <div class="flex flex-wrap items-center justify-between gap-x-4">
+      <p id="result-count" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest px-2"></p>
+      <p id="load-status" class="text-[10px] font-bold px-2 text-gray-500"></p>
+    </div>
   </div>
 
   <div id="log-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"></div>
@@ -91,26 +97,91 @@ function showToast(msg, isError = false) {
   t.classList.add('toast-show'); setTimeout(() => t.classList.remove('toast-show'), 3000);
 }
 
-async function sendApi(payload, btnElement = null, originalText = "") {
+// ---- API dengan timeout (sebelumnya fetch bisa menggantung selamanya) ----
+async function sendApi(payload, btnElement = null, originalText = "", timeoutMs = 30000) {
   if(btnElement) { btnElement.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; btnElement.classList.add('opacity-50', 'pointer-events-none'); }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const res = await fetch(WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: ctrl.signal });
     const txt = await res.text(); let data; try { data = JSON.parse(txt); } catch(e) { data = {status: "error"}; }
-    if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
     return Array.isArray(data) ? data[0] : data;
-  } catch(e) { if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); } return null; }
+  } catch(e) {
+    return { status: "error", message: e.name === 'AbortError' ? 'timeout' : 'network' };
+  } finally {
+    clearTimeout(timer);
+    if(btnElement) { btnElement.innerHTML = originalText; btnElement.classList.remove('opacity-50', 'pointer-events-none'); }
+  }
+}
+
+// ---- Cache lokal: tampilkan data terakhir langsung, lalu perbarui di belakang layar ----
+const CACHE_PREFIX = 'ffi_cache_load_admin_';
+let isLoadingLog = false;
+
+function cacheKey(period) { return CACHE_PREFIX + (period || 'all'); }
+function readCache(period) { try { return JSON.parse(localStorage.getItem(cacheKey(period))); } catch(e) { return null; } }
+function writeCache(period, data) { try { localStorage.setItem(cacheKey(period), JSON.stringify({ t: Date.now(), data })); } catch(e) { /* kuota penuh: abaikan */ } }
+function clearCache() { Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX)).forEach(k => localStorage.removeItem(k)); }
+const hhmm = (ts) => { const d = new Date(ts); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+
+function setLoadStatus(html, tone = 'mute') {
+  const el = document.getElementById('load-status');
+  el.className = 'text-[10px] font-bold px-2 ' + (tone === 'error' ? 'text-red-300' : tone === 'warn' ? 'text-amber-300' : 'text-gray-500');
+  el.innerHTML = html;
+}
+
+function showLoadError(msg) {
+  document.getElementById('log-container').innerHTML = `
+    <div class="col-span-full glass-flat p-8 text-center space-y-3">
+      <i class="fa-solid fa-triangle-exclamation text-2xl" style="color:#FF6B81"></i>
+      <p class="text-sm font-bold">${msg}</p>
+      <p class="text-[11px] text-gray-400">Server n8n / Google Sheets sedang lambat atau tidak merespons.</p>
+      <button type="button" onclick="loadLogPO()" class="btn-primary btn-tactile px-6 py-3 text-xs"><i class="fa-solid fa-rotate-right mr-2"></i>Coba Lagi</button>
+    </div>`;
 }
 
 async function loadLogPO() {
+  if (isLoadingLog) return;
+  isLoadingLog = true;
   const btn = document.getElementById('btn-sync-log');
   const cont = document.getElementById('log-container');
-  if(cont) cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-3xl h-24 w-full"></div>`).join('');
+  const period = document.getElementById('filter-month').value;   // "YYYY-MM" atau kosong = semua
+  const syncIcon = `<i class="fa-solid fa-rotate-right text-sm"></i>`;
 
-  const res = await sendApi({ action: "load_admin" }, btn, `<i class="fa-solid fa-rotate-right text-sm"></i>`);
+  // 1) Tampilkan cache dulu (kalau ada) supaya tidak menatap skeleton
+  const cached = readCache(period);
+  if (cached && Array.isArray(cached.data)) {
+    activeLogData = cached.data; filterLogLocal();
+    setLoadStatus(`<i class="fa-solid fa-clock-rotate-left mr-1"></i>Data tersimpan (${hhmm(cached.t)}) • memperbarui...`);
+  } else {
+    cont.innerHTML = Array(4).fill(`<div class="skeleton-box rounded-3xl h-24 w-full"></div>`).join('');
+    setLoadStatus('Memuat data...');
+  }
+  const slowTimer = setTimeout(() => setLoadStatus('Server lambat merespons, masih mencoba...', 'warn'), 8000);
+
+  const payload = { action: "load_admin" };
+  if (period) { const [y, m] = period.split('-'); payload.filter_year = y; payload.filter_month = String(Number(m)); }
+
+  // 2) Ambil data terbaru: timeout 30 dtk, otomatis coba ulang 1x
+  let res = await sendApi(payload, btn, syncIcon);
+  if (!(res && res.status === "success")) {
+    setLoadStatus('Gagal, mencoba ulang...', 'warn');
+    res = await sendApi(payload, btn, syncIcon);
+  }
+  clearTimeout(slowTimer);
+  isLoadingLog = false;
+
   if (res && res.status === "success") {
     activeLogData = res.data || [];
+    writeCache(period, activeLogData);
     filterLogLocal();
+    setLoadStatus(`<i class="fa-solid fa-circle-check mr-1" style="color:#4ADE80"></i>Diperbarui ${hhmm(Date.now())}`);
+  } else if (cached && Array.isArray(cached.data)) {
+    setLoadStatus(`<i class="fa-solid fa-triangle-exclamation mr-1"></i>Gagal memperbarui — menampilkan data tersimpan (${hhmm(cached.t)})`, 'warn');
+    showToast("Gagal memperbarui, memakai data tersimpan", true);
   } else {
+    setLoadStatus('Gagal memuat data', 'error');
+    showLoadError(res && res.message === 'timeout' ? 'Server tidak merespons (timeout 30 detik)' : 'Gagal mengambil data dari server');
     showToast("Gagal mengambil data", true);
   }
 }
@@ -191,6 +262,7 @@ async function deletePO(id) {
   const res = await sendApi({ action: "delete", id: id });
   if(res && res.status === "success") {
     showToast(`PO ${id} Berhasil Dibatalkan!`);
+    clearCache();
     loadLogPO();
   } else {
     showToast("Gagal void data", true);
