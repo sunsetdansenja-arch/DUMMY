@@ -321,12 +321,34 @@ function salesQty(row) { return safeNum(row["Qty Terpenuhi (Kirim)"]) || SKUS.re
 // Backend "Delete PO" mengisi DC="0" + semua qty 0 (bukan teks BATAL), jadi harus dideteksi di sini
 function isVoidRow(row) {
   if (String(row["PO NKA"] ?? '').toUpperCase().includes('BATAL')) return true;
+  if (String(row["Status Supply Chain (SSC)"] ?? '').toUpperCase().includes('DIHAPUS')) return true;
   if (String(row.DC ?? '').trim() === '0') return true;
   return poQty(row) === 0 && salesQty(row) === 0;
 }
 
+// Sheet punya ID ganda & spasi nyasar (mis. " PZ01..." / "BEREBEK ") -> rapikan agar tidak terhitung dobel
 function validRows() {
-  return dbLogData.map(i => i.json || i).filter(r => r && r.ID && String(r.ID).toUpperCase() !== 'ID' && !isVoidRow(r));
+  const byId = new Map();
+  dbLogData.map(i => i.json || i).forEach(r => {
+    if (!r || !r.ID) return;
+    const id = String(r.ID).trim().toUpperCase();
+    if (!id || id === 'ID') return;
+    const prev = byId.get(id);
+    if (!prev || safeNum(r.row_number) > safeNum(prev.row_number)) byId.set(id, r);
+  });
+  return [...byId.values()].filter(r => !isVoidRow(r));
+}
+// Tanggal janggal: PO di masa depan, EXP sebelum PO, atau EXP > 60 hari dari PO (biasanya typo tahun)
+function dateAnomalies() {
+  const today = new Date(); const t0 = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  const ms = (t) => Date.UTC(t.y, t.m - 1, t.d);
+  return validRows().filter(r => {
+    const a = parseTgl(r["Tanggal PO"]), b = parseTgl(r["Tanggal EXP"]);
+    if (!a) return true;
+    if (ms(a) > t0) return true;
+    if (b && (ms(b) < ms(a) || (ms(b) - ms(a)) / 864e5 > 60)) return true;
+    return false;
+  });
 }
 function rowsInMonth(y, m) {
   return validRows().filter(r => { const t = parseTgl(r["Tanggal PO"]); return t && t.y === y && t.m === m; });
@@ -400,7 +422,9 @@ async function initialFetch() {
     showToast("Sebagian data gagal dimuat", 'error', 4000);
   } else {
     const now = new Date();
-    setStatus(`<i class="fa-solid fa-circle-check mr-1" style="color:#4ADE80"></i>Data live • ${validRows().length} PO aktif • diperbarui ${pad2(now.getHours())}:${pad2(now.getMinutes())}`);
+    const bad = dateAnomalies();
+    setStatus(`<i class="fa-solid fa-circle-check mr-1" style="color:#4ADE80"></i>Data live • ${validRows().length} PO aktif • diperbarui ${pad2(now.getHours())}:${pad2(now.getMinutes())}` +
+      (bad.length ? `<br><span style="color:#FFB020"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${bad.length} PO bertanggal janggal (kemungkinan typo tahun), mis. ${bad.slice(0,3).map(r => esc(String(r.ID).trim())).join(', ')}. Periksa kolom Tanggal PO di sheet.</span>` : ''));
     showToast("Data siap!");
   }
   renderReports();
@@ -656,7 +680,7 @@ function renderLogReport() {
   document.getElementById('rep-log-period').innerHTML = `Periode: ${pad2(ym.m)} / ${ym.y} &nbsp;|&nbsp; Target: <span style="color:#BE123C;">${dcVal === 'ALL' ? 'SEMUA DC' : esc(dcVal)}</span>`;
 
   const rows = rowsInMonth(ym.y, ym.m)
-    .filter(r => dcVal === 'ALL' || String(r.DC).toUpperCase() === dcVal.toUpperCase())
+    .filter(r => dcVal === 'ALL' || String(r.DC).trim().toUpperCase() === dcVal.toUpperCase())
     .sort((a, b) => {
       const ta = parseTgl(a["Tanggal PO"]), tb = parseTgl(b["Tanggal PO"]);
       return (ta.d - tb.d) || String(a.ID).localeCompare(String(b.ID));
@@ -673,9 +697,9 @@ function renderLogReport() {
     totPO += po; totSls += sls; totGap += gap;
     body += `
       <tr style="page-break-inside: avoid;">
-        <td style="${td} font-weight:bold; color:#0F172A;">${esc(row.ID)}</td>
+        <td style="${td} font-weight:bold; color:#0F172A;">${esc(String(row.ID).trim())}</td>
         <td style="${td} color:#475569;">${esc(row["Tanggal PO"])}</td>
-        <td style="${td} font-weight:600;">${esc(row.DC)}</td>
+        <td style="${td} font-weight:600;">${esc(String(row.DC).trim())}</td>
         <td style="${td} text-align:center;">${fmt(po)}</td>
         <td style="${td} text-align:center;">${fmt(sls)}</td>
         <td style="${td} text-align:center; font-weight:bold; color:${gap > 0 ? '#EF4444' : '#10B981'}">${fmt(gap)}</td>
