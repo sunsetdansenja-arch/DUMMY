@@ -25,6 +25,7 @@ tailwind.config = {
 <style>
 .accordion-content { max-height: 0; overflow: hidden; transition: max-height .45s ease-out, opacity .35s; opacity: 0; }
 .accordion-expanded { max-height: 800px; opacity: 1; border-top: 1px solid rgba(255,255,255,.10); padding-top: .75rem; margin-top: .75rem; }
+.log-card { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(255,255,255,.07) !important; content-visibility: auto; contain-intrinsic-size: 96px; }
 .void-card { background: linear-gradient(135deg, rgba(120,10,30,.30), rgba(60,5,15,.25)) !important; }
 </style>
 </head>
@@ -59,9 +60,10 @@ tailwind.config = {
     <div class="flex gap-2">
       <div class="relative flex-1 min-w-0">
         <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-        <input type="text" id="search-po" placeholder="Cari ID PO atau DC Gudang..." onkeyup="filterLogLocal()" style="padding-left: 2.6rem; border-radius: 9999px;">
+        <input type="text" id="search-po" placeholder="Cari ID PO atau DC Gudang..." oninput="onSearchInput()" style="padding-left: 2.6rem; border-radius: 9999px;">
       </div>
-      <input type="month" id="filter-month" onchange="loadLogPO()" title="Periode PO (kosongkan = semua)" style="width: 9.5rem; border-radius: 9999px; padding-left: 1rem; padding-right: .75rem; flex-shrink: 0;">
+      <input type="month" id="filter-month" onchange="loadLogPO()" title="Periode PO" style="width: 9.5rem; border-radius: 9999px; padding-left: 1rem; padding-right: .75rem; flex-shrink: 0;">
+      <button type="button" onclick="clearMonth()" class="btn-ghost btn-tactile px-4 text-[11px] shrink-0" title="Tampilkan semua periode">Semua</button>
     </div>
     <div class="seg" id="status-filter">
       <button type="button" class="seg-btn active" data-f="all" onclick="setFilter('all')">Semua</button>
@@ -77,6 +79,7 @@ tailwind.config = {
   </div>
 
   <div id="log-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start"></div>
+  <div id="more-wrap" class="text-center pt-2"></div>
 </main>
 
 <nav class="bottom-nav" aria-label="Navigasi utama"><a href="index.html" class="bn-item"><i class="fa-solid fa-house"></i>Lobby</a><a href="input.html" class="bn-item"><i class="fa-solid fa-pen-to-square"></i>Input</a><a href="analytic.html" class="bn-item"><i class="fa-solid fa-chart-simple"></i>Analytic</a><a href="data.html" class="bn-item active"><i class="fa-solid fa-database"></i>Data</a><a href="report.html" class="bn-item"><i class="fa-solid fa-file-pdf"></i>Laporan</a></nav>
@@ -88,6 +91,8 @@ let activeFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', () => {
   if(!localStorage.getItem('ffi_user')) { window.location.href = 'index.html'; return; }
+  const now = new Date();
+  document.getElementById('filter-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   setTimeout(() => { loadLogPO(); }, 100);
 });
 
@@ -186,11 +191,12 @@ async function loadLogPO() {
   }
 }
 
-// Status tiap PO: void / done / part / none
+// Status tiap PO (void juga dikenali dari SSC "DATA TELAH DIHAPUS" dan qty 0)
 function getStatus(item) {
-  const isBatal = String(item["PO NKA"]).includes("BATAL") || (Number(item["TOTAL PO ctn"]||0) === 0 && (Number(item["Qty Terpenuhi (Kirim)"]||0) === 0));
+  const ssc = String(item["Status Supply Chain (SSC)"] || "").toUpperCase();
   const poQty = Number(item["TOTAL PO ctn"]) || 0;
   const salesQty = Number(item["Qty Terpenuhi (Kirim)"]) || (Number(item["NKA"]||0) + Number(item["NDLH"]||0) + Number(item["NRD"]||0) + Number(item["NARR"]||0) + Number(item["NKACH"]||0));
+  const isBatal = String(item["PO NKA"]).includes("BATAL") || ssc.includes("DIHAPUS") || (poQty === 0 && salesQty === 0);
   let status = 'none';
   if (isBatal) status = 'void';
   else if (salesQty >= (poQty * 0.85)) status = 'done';
@@ -198,70 +204,93 @@ function getStatus(item) {
   return { isBatal, poQty, salesQty, status };
 }
 
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PAGE_SIZE = 40;
+let filteredData = [];
+let shownCount = PAGE_SIZE;
+let searchTimer = null;
+
 function setFilter(f) {
   activeFilter = f;
   document.querySelectorAll('#status-filter .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.f === f));
   filterLogLocal();
 }
+function onSearchInput() { clearTimeout(searchTimer); searchTimer = setTimeout(filterLogLocal, 200); }
+function clearMonth() { document.getElementById('filter-month').value = ''; loadLogPO(); }
 
 function filterLogLocal() {
-  const q = document.getElementById('search-po').value.toLowerCase();
-  renderLogs(activeLogData.filter(i =>
-    ((i.ID && i.ID.toLowerCase().includes(q)) || (i.DC && i.DC.toLowerCase().includes(q))) &&
+  const q = document.getElementById('search-po').value.trim().toLowerCase();
+  filteredData = activeLogData.filter(i =>
+    i.ID && String(i.ID).trim() !== '' &&
+    (String(i.ID).toLowerCase().includes(q) || String(i.DC || '').toLowerCase().includes(q)) &&
     (activeFilter === 'all' || getStatus(i).status === activeFilter)
-  ));
+  );
+  shownCount = PAGE_SIZE;
+  renderLogs();
 }
 
-function renderLogs(data) {
-  const cont = document.getElementById('log-container'); if(!cont) return; cont.innerHTML = '';
-  document.getElementById('result-count').innerText = `${data.filter(d => d.ID).length} PO ditampilkan`;
-  if(!data.length) { cont.innerHTML = `<p class="col-span-full text-center italic opacity-40 text-sm py-10">Tidak ada riwayat data...</p>`; return; }
-
-  data.forEach((item, idx) => {
-    if(!item.ID) return;
-    const { isBatal, poQty, salesQty, status } = getStatus(item);
-    const batchInfo = item.BATCHES || item.batches || "-";
-
-    let border = "border-white/10", text = "text-appred", icon = "fa-circle-xmark", cardBg = "bg-appcard", badge = "";
-    if (isBatal) { border = "border-appred/40"; cardBg = "bg-appcard void-card"; icon = "fa-ban"; badge = `<div class="absolute top-3 right-3 bg-appred text-black text-[8px] font-black px-2 py-0.5 rounded">VOID</div>`; }
-    else if (status === 'done') { border = "border-appgreen/40"; text = "text-appgreen"; icon = "fa-circle-check"; }
-    else if (status === 'part') { border = "border-appappleorange/40"; text = "text-appappleorange"; icon = "fa-clock-rotate-left"; }
-
-    cont.innerHTML += `
-      <div class="${cardBg} rounded-3xl border ${border} overflow-hidden relative animate-fade" style="animation-delay:${idx*20}ms; opacity:0">
-        ${badge}
-        <div class="p-5 flex items-center justify-between cursor-pointer btn-tactile" onclick="toggleCard('${item.ID}')">
-          <div class="flex items-center gap-4 w-2/3">
-            <div class="w-10 h-10 rounded-xl bg-black/30 flex items-center justify-center border border-white/10 shrink-0 ${isBatal?'text-appred':text}"><i class="fa-solid ${icon} text-lg"></i></div>
-            <div class="min-w-0"><h4 class="font-black text-sm uppercase truncate ${isBatal?'text-gray-500':''}">${item.ID}</h4><p class="text-[10px] text-gray-400 font-bold uppercase mt-1 truncate">${item.DC} • ${item["Tanggal PO"]}</p></div>
-          </div>
-          <div class="text-right"><p class="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-0.5">PO / SALES</p><p class="text-sm font-black ${isBatal?'text-gray-500':text}">${poQty} / ${salesQty}</p></div>
+function cardHtml(item, idx) {
+  const { isBatal, poQty, salesQty, status } = getStatus(item);
+  const batchInfo = esc(item.BATCHES || item.batches || "-");
+  let border = "border-white/10", text = "text-appred", icon = "fa-circle-xmark", cardBg = "bg-appcard", badge = "";
+  if (isBatal) { border = "border-appred/40"; cardBg = "bg-appcard void-card"; icon = "fa-ban"; badge = `<div class="absolute top-3 right-3 bg-appred text-black text-[8px] font-black px-2 py-0.5 rounded">VOID</div>`; }
+  else if (status === 'done') { border = "border-appgreen/40"; text = "text-appgreen"; icon = "fa-circle-check"; }
+  else if (status === 'part') { border = "border-appappleorange/40"; text = "text-appappleorange"; icon = "fa-clock-rotate-left"; }
+  const row = (k, a, b) => `<div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">${k}</span><span>${Number(item["PO "+k])||0} ➔ <span class="${k==='NKACH'?'text-appgreen':'text-appappleblue'}">${Number(item[k])||0}</span></span></div>`;
+  const gap = Number(item["GAP"]) || 0;
+  return `
+    <div class="${cardBg} log-card rounded-3xl border ${border} overflow-hidden relative">
+      ${badge}
+      <div class="p-5 flex items-center justify-between cursor-pointer btn-tactile" onclick="toggleCard(${idx})">
+        <div class="flex items-center gap-4 w-2/3">
+          <div class="w-10 h-10 rounded-xl bg-black/30 flex items-center justify-center border border-white/10 shrink-0 ${isBatal?'text-appred':text}"><i class="fa-solid ${icon} text-lg"></i></div>
+          <div class="min-w-0"><h4 class="font-black text-sm uppercase truncate ${isBatal?'text-gray-500':''}">${esc(String(item.ID).trim())}</h4><p class="text-[10px] text-gray-400 font-bold uppercase mt-1 truncate">${esc(String(item.DC||'').trim())} • ${esc(item["Tanggal PO"])}</p></div>
         </div>
-        <div id="det-${item.ID}" class="accordion-content px-5 pb-5 pt-0">
-          <div class="bg-black/30 p-2.5 rounded-xl border border-white/10 mb-3 text-center"><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Tag Batch Terikat</p><p class="text-[10px] text-appappleblue font-black tracking-wider uppercase">${batchInfo}</p></div>
-          <div class="space-y-1.5 text-[10px] font-extrabold uppercase">
-            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NKA</span><span>${item["PO NKA"]||0} ➔ <span class="text-appappleblue">${item["NKA"]||0}</span></span></div>
-            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NDLH</span><span>${item["PO NDLH"]||0} ➔ <span class="text-appappleblue">${item["NDLH"]||0}</span></span></div>
-            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NRD</span><span>${item["PO NRD"]||0} ➔ <span class="text-appappleblue">${item["NRD"]||0}</span></span></div>
-            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NARR</span><span>${item["PO NARR"]||0} ➔ <span class="text-appappleblue">${item["NARR"]||0}</span></span></div>
-            <div class="flex justify-between bg-white/5 py-2 px-4 rounded-lg"><span class="text-gray-400">NKACH</span><span>${item["PO NKACH"]||0} ➔ <span class="text-appgreen">${item["NKACH"]||0}</span></span></div>
-          </div>
-          <div class="flex justify-between items-center border-t border-white/10 pt-4 mt-4">
-            <div><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">GAP Supply</p><p class="text-sm font-black ${item["GAP"]==0?'text-appgreen':'text-appred'}">${item["GAP"]||0} CTN</p></div>
-            <button type="button" onclick="deletePO('${item.ID}')" class="bg-appred/10 text-appred border border-appred/30 font-extrabold text-[9px] py-2 px-4 rounded-xl btn-tactile hover:bg-appred hover:text-black ${isBatal?'hidden-tab':''}"><i class="fa-solid fa-trash mr-1.5"></i>BATAL PO</button>
-          </div>
+        <div class="text-right"><p class="text-[8px] text-gray-500 uppercase font-black tracking-widest mb-0.5">PO / SALES</p><p class="text-sm font-black ${isBatal?'text-gray-500':text}">${poQty} / ${salesQty}</p></div>
+      </div>
+      <div id="det-${idx}" class="accordion-content px-5 pb-5 pt-0">
+        <div class="bg-black/30 p-2.5 rounded-xl border border-white/10 mb-3 text-center"><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">Tag Batch Terikat</p><p class="text-[10px] text-appappleblue font-black tracking-wider uppercase">${batchInfo}</p></div>
+        <div class="space-y-1.5 text-[10px] font-extrabold uppercase">${['NKA','NDLH','NRD','NARR','NKACH'].map(k => row(k)).join('')}</div>
+        <div class="flex justify-between items-center border-t border-white/10 pt-4 mt-4">
+          <div><p class="text-[8px] text-gray-500 font-bold uppercase mb-0.5">GAP Supply</p><p class="text-sm font-black ${gap==0?'text-appgreen':'text-appred'}">${gap} CTN</p></div>
+          <button type="button" onclick="deletePO(${idx})" class="bg-appred/10 text-appred border border-appred/30 font-extrabold text-[9px] py-2 px-4 rounded-xl btn-tactile hover:bg-appred hover:text-black ${isBatal?'hidden-tab':''}"><i class="fa-solid fa-trash mr-1.5"></i>BATAL PO</button>
         </div>
-      </div>`;
-  });
+      </div>
+    </div>`;
 }
 
-function toggleCard(id) { document.getElementById('det-' + id).classList.toggle('accordion-expanded'); }
+function updateMoreBtn() {
+  const remaining = filteredData.length - Math.min(shownCount, filteredData.length);
+  document.getElementById('more-wrap').innerHTML = remaining > 0
+    ? `<button type="button" onclick="showMore()" class="btn-ghost btn-tactile px-6 py-3 text-xs"><i class="fa-solid fa-angles-down mr-2"></i>Tampilkan ${Math.min(PAGE_SIZE, remaining)} lagi (${remaining} tersisa)</button>` : '';
+}
 
-async function deletePO(id) {
-  if(!confirm(`Apakah Anda yakin ingin membatalkan/void transaksi PO: ${id}?`)) return;
+function renderLogs() {
+  const cont = document.getElementById('log-container');
+  document.getElementById('result-count').innerText = `${filteredData.length} PO ditemukan`;
+  if (!filteredData.length) {
+    cont.innerHTML = `<p class="col-span-full text-center italic opacity-50 text-sm py-10">Tidak ada data. Coba ubah filter, atau klik "Semua" untuk melihat semua periode.</p>`;
+    document.getElementById('more-wrap').innerHTML = ''; return;
+  }
+  cont.innerHTML = filteredData.slice(0, shownCount).map((it, i) => cardHtml(it, i)).join('');   // satu kali set innerHTML
+  updateMoreBtn();
+}
+
+function showMore() {
+  const start = shownCount; shownCount += PAGE_SIZE;
+  document.getElementById('log-container').insertAdjacentHTML('beforeend', filteredData.slice(start, shownCount).map((it, i) => cardHtml(it, start + i)).join(''));
+  updateMoreBtn();
+}
+
+function toggleCard(idx) { document.getElementById('det-' + idx).classList.toggle('accordion-expanded'); }
+
+async function deletePO(idx) {
+  const item = filteredData[idx]; if (!item) return;
+  const id = item.ID;   // kirim ID persis seperti di sheet (bisa ada spasi)
+  if(!confirm(`Apakah Anda yakin ingin membatalkan/void transaksi PO: ${String(id).trim()}?`)) return;
   const res = await sendApi({ action: "delete", id: id });
   if(res && res.status === "success") {
-    showToast(`PO ${id} Berhasil Dibatalkan!`);
+    showToast(`PO ${String(id).trim()} Berhasil Dibatalkan!`);
     clearCache();
     loadLogPO();
   } else {
